@@ -37,7 +37,7 @@ cargo build --release
 ## 开发路线图
 
 ### 阶段 1：基础设施
-- [ ] 项目结构和依赖配置
+- [x] 项目结构和依赖配置
 - [ ] 错误类型系统（CdbError、SessionError、ToolError）
 - [ ] 共享类型定义（ToolResponse、参数类型）
 
