@@ -38,8 +38,8 @@ cargo build --release
 
 ### 阶段 1：基础设施
 - [x] 项目结构和依赖配置
-- [ ] 错误类型系统（CdbError、SessionError、ToolError）
-- [ ] 共享类型定义（ToolResponse、参数类型）
+- [x] 错误类型系统（CdbError、SessionError、ToolError）
+- [x] 共享类型定义（ToolResponse、参数类型）
 
 ### 阶段 2：核心工具
 - [ ] CDB 可执行文件发现和路径解析

@@ -38,8 +38,8 @@ cargo build --release
 
 ### Phase 1: Foundation
 - [x] Project structure and dependencies setup
-- [ ] Error type system (CdbError, SessionError, ToolError)
-- [ ] Shared type definitions (ToolResponse, parameters)
+- [x] Error type system (CdbError, SessionError, ToolError)
+- [x] Shared type definitions (ToolResponse, parameters)
 
 ### Phase 2: Core Utilities
 - [ ] CDB executable discovery and path resolution

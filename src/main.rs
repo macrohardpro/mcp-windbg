@@ -2,7 +2,7 @@ use tracing::info;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
-    // Initialize tracing subscriber
+    // 初始化 tracing 日志订阅器
     tracing_subscriber::fmt()
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -12,7 +12,7 @@ async fn main() -> anyhow::Result<()> {
 
     info!("MCP WinDbg Server starting...");
 
-    // TODO: Initialize server and start listening
+    // TODO: 初始化服务器并开始监听
 
     Ok(())
 }
