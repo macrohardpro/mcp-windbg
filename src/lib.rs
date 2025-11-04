@@ -5,9 +5,9 @@
 pub mod cdb;
 pub mod error;
 pub mod session;
+pub mod tools;
 pub mod types;
 pub mod utils;
 
 // 待实现的模块
 // pub mod server;
-// pub mod tools;

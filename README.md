@@ -42,21 +42,21 @@ cargo build --release
 - [x] Shared type definitions (ToolResponse, parameters)
 
 ### Phase 2: Core Utilities
-- [ ] CDB executable discovery and path resolution
-- [ ] Windows registry access for dump file paths
-- [ ] Recursive dump file search functionality
+- [x] CDB executable discovery and path resolution
+- [x] Windows registry access for dump file paths
+- [x] Recursive dump file search functionality
 
 ### Phase 3: CDB Session Management
-- [ ] CdbSession implementation for dump files and remote debugging
-- [ ] Async command execution with timeout handling
-- [ ] SessionManager with connection pooling and lifecycle management
+- [x] CdbSession implementation for dump files and remote debugging
+- [x] Async command execution with timeout handling
+- [x] SessionManager with connection pooling and lifecycle management
 
 ### Phase 4: MCP Tools
-- [ ] `open_windbg_dump` - Crash analysis with !analyze -v
-- [ ] `open_windbg_remote` - Remote debugging connection
-- [ ] `run_windbg_cmd` - Custom command execution
-- [ ] `close_windbg_dump` / `close_windbg_remote` - Session cleanup
-- [ ] `list_windbg_dumps` - Dump file discovery
+- [x] `open_windbg_dump` - Crash analysis with !analyze -v
+- [x] `open_windbg_remote` - Remote debugging connection
+- [x] `run_windbg_cmd` - Custom command execution
+- [x] `close_windbg_dump` / `close_windbg_remote` - Session cleanup
+- [x] `list_windbg_dumps` - Dump file discovery
 
 ### Phase 5: MCP Server
 - [ ] Server configuration and initialization

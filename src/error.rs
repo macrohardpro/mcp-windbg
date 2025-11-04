@@ -66,6 +66,10 @@ pub enum ToolError {
     #[error("Session error: {0}")]
     SessionError(#[from] SessionError),
 
+    /// CDB 命令执行错误
+    #[error("CDB error: {0}")]
+    CdbError(#[from] CdbError),
+
     /// 工具执行期间发生内部错误
     #[error("Internal error: {0}")]
     InternalError(String),

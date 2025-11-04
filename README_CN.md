@@ -42,21 +42,21 @@ cargo build --release
 - [x] 共享类型定义（ToolResponse、参数类型）
 
 ### 阶段 2：核心工具
-- [ ] CDB 可执行文件发现和路径解析
-- [ ] Windows 注册表访问获取转储文件路径
-- [ ] 递归转储文件搜索功能
+- [x] CDB 可执行文件发现和路径解析
+- [x] Windows 注册表访问获取转储文件路径
+- [x] 递归转储文件搜索功能
 
 ### 阶段 3：CDB 会话管理
-- [ ] CdbSession 实现（支持转储文件和远程调试）
-- [ ] 异步命令执行和超时处理
-- [ ] SessionManager 连接池和生命周期管理
+- [x] CdbSession 实现（支持转储文件和远程调试）
+- [x] 异步命令执行和超时处理
+- [x] SessionManager 连接池和生命周期管理
 
 ### 阶段 4：MCP 工具
-- [ ] `open_windbg_dump` - 使用 !analyze -v 进行崩溃分析
-- [ ] `open_windbg_remote` - 远程调试连接
-- [ ] `run_windbg_cmd` - 自定义命令执行
-- [ ] `close_windbg_dump` / `close_windbg_remote` - 会话清理
-- [ ] `list_windbg_dumps` - 转储文件发现
+- [x] `open_windbg_dump` - 使用 !analyze -v 进行崩溃分析
+- [x] `open_windbg_remote` - 远程调试连接
+- [x] `run_windbg_cmd` - 自定义命令执行
+- [x] `close_windbg_dump` / `close_windbg_remote` - 会话清理
+- [x] `list_windbg_dumps` - 转储文件发现
 
 ### 阶段 5：MCP 服务器
 - [ ] 服务器配置和初始化
