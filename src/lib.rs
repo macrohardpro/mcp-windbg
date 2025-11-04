@@ -4,10 +4,10 @@
 
 pub mod error;
 pub mod types;
+pub mod utils;
 
 // 待实现的模块
 // pub mod cdb;
 // pub mod session;
 // pub mod server;
 // pub mod tools;
-// pub mod utils;
