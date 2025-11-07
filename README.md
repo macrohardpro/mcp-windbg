@@ -76,8 +76,6 @@ Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
 - [x] Configuration reference
 - [x] Troubleshooting guide
 
-See [tasks.md](.kiro/specs/mcp-windbg-rs/tasks.md) for detailed implementation tasks.
-
 ## Usage
 
 ### Available Tools

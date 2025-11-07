@@ -18,106 +18,35 @@
    $env:PATH += ";D:\workspace\mcp-windbg\target\release"
    ```
 
-## Kiro IDE 配置
+## VSCode 配置
 
-Kiro 使用位于 `.kiro/settings/mcp.json`（工作区）或 `~/.kiro/settings/mcp.json`（全局）的 MCP 配置文件。
-
-### 工作区配置
-
-创建或编辑 `.kiro/settings/mcp.json`：
+添加到 VSCode MCP 设置（`.vscode/mcp.json`）：
 
 ```json
 {
-  "mcpServers": {
-    "mcp-windbg-rs": {
+  "servers": {
+    "mcp-windbg": {
+      "type": "stdio",
       "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
       "args": ["--verbose"],
       "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "60"
-      },
-      "disabled": false,
-      "autoApprove": []
+        "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "120"
+      }
     }
-  }
-}
-```
-
-### 全局配置
-
-创建或编辑 `~/.kiro/settings/mcp.json` 以实现系统级访问：
-
-```json
-{
-  "mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "mcp-windbg-rs",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      },
-      "disabled": false
-    }
-  }
+  },
+  "inputs": []
 }
 ```
 
 **注意**：如果已将可执行文件添加到 PATH，可以直接使用 `mcp-windbg-rs` 作为命令。
 
-## VSCode 配置（使用 Cline/Claude Dev）
-
-### Cline 扩展
-
-编辑 Cline 设置（`.vscode/settings.json` 或用户设置）：
-
-```json
-{
-  "cline.mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      }
-    }
-  }
-}
-```
-
-### Claude Dev 扩展
-
-创建或编辑 `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json`（macOS/Linux）或 `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json`（Windows）：
-
-```json
-{
-  "mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      }
-    }
-  }
-}
-```
-
 ## 验证
 
-### 在 Kiro 中测试
-
-1. 打开 Kiro IDE
-2. 在 Kiro 功能面板中打开 MCP Server 视图
-3. 应该能看到 `mcp-windbg-rs` 列出
-4. 如需要，点击连接/重新连接
-5. 在聊天中尝试："列出 C:\Windows\Minidump 中的崩溃转储文件"
-
-### 在 VSCode 中测试
-
-1. 打开安装了 Cline/Claude Dev 扩展的 VSCode
-2. 打开扩展面板
-3. 开始对话
-4. 尝试："帮我分析 C:\dumps\app.dmp 的崩溃转储"
+1. 打开 VSCode
+2. 打开 MCP 扩展面板
+3. 应该能看到 `mcp-windbg` 列出并已连接
+4. 开始对话并尝试："列出 C:\Windows\Minidump 中的崩溃转储文件"
 
 ## 配置选项
 
@@ -149,8 +78,7 @@ Kiro 使用位于 `.kiro/settings/mcp.json`（工作区）或 `~/.kiro/settings/
    ```
 
 3. **检查日志**
-   - Kiro：查看 MCP Server 视图中的错误消息
-   - VSCode：查看扩展输出面板
+   - VSCode：查看 MCP 扩展输出面板
 
 ### CDB 未找到
 

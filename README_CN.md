@@ -76,8 +76,6 @@ cargo build --release
 - [x] 配置参考
 - [x] 故障排除指南
 
-详细实现任务见 [tasks.md](.kiro/specs/mcp-windbg-rs/tasks.md)。
-
 ## 使用指南
 
 ### 可用工具

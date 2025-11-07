@@ -18,106 +18,35 @@
    $env:PATH += ";D:\workspace\mcp-windbg\target\release"
    ```
 
-## Configuration for Kiro IDE
+## Configuration for VSCode
 
-Kiro uses MCP configuration files located at `.kiro/settings/mcp.json` (workspace) or `~/.kiro/settings/mcp.json` (global).
-
-### Workspace Configuration
-
-Create or edit `.kiro/settings/mcp.json`:
+Add to your VSCode MCP settings (`.vscode/mcp.json`):
 
 ```json
 {
-  "mcpServers": {
-    "mcp-windbg-rs": {
+  "servers": {
+    "mcp-windbg": {
+      "type": "stdio",
       "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
       "args": ["--verbose"],
       "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "60"
-      },
-      "disabled": false,
-      "autoApprove": []
+        "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "120"
+      }
     }
-  }
-}
-```
-
-### Global Configuration
-
-Create or edit `~/.kiro/settings/mcp.json` for system-wide access:
-
-```json
-{
-  "mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "mcp-windbg-rs",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      },
-      "disabled": false
-    }
-  }
+  },
+  "inputs": []
 }
 ```
 
 **Note**: If you added the executable to PATH, you can use just `mcp-windbg-rs` as the command.
 
-## Configuration for VSCode (with Cline/Claude Dev)
-
-### For Cline Extension
-
-Edit your Cline settings (`.vscode/settings.json` or user settings):
-
-```json
-{
-  "cline.mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      }
-    }
-  }
-}
-```
-
-### For Claude Dev Extension
-
-Create or edit `~/Library/Application Support/Code/User/globalStorage/saoudrizwan.claude-dev/settings/cline_mcp_settings.json` (macOS/Linux) or `%APPDATA%\Code\User\globalStorage\saoudrizwan.claude-dev\settings\cline_mcp_settings.json` (Windows):
-
-```json
-{
-  "mcpServers": {
-    "mcp-windbg-rs": {
-      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
-      "args": [],
-      "env": {
-        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-      }
-    }
-  }
-}
-```
-
 ## Verification
 
-### Test in Kiro
-
-1. Open Kiro IDE
-2. Open the MCP Server view in the Kiro feature panel
-3. You should see `mcp-windbg-rs` listed
-4. Click to connect/reconnect if needed
-5. In chat, try: "List available crash dumps in C:\Windows\Minidump"
-
-### Test in VSCode
-
-1. Open VSCode with Cline/Claude Dev extension
-2. Open the extension panel
-3. Start a conversation
-4. Try: "Help me analyze the crash dump at C:\dumps\app.dmp"
+1. Open VSCode
+2. Open the MCP extension panel
+3. You should see `mcp-windbg` listed and connected
+4. Start a conversation and try: "List available crash dumps in C:\Windows\Minidump"
 
 ## Configuration Options
 
@@ -149,8 +78,7 @@ Create or edit `~/Library/Application Support/Code/User/globalStorage/saoudrizwa
    ```
 
 3. **Check logs**
-   - Kiro: Check the MCP Server view for error messages
-   - VSCode: Check the extension output panel
+   - VSCode: Check the MCP extension output panel
 
 ### CDB Not Found
 
