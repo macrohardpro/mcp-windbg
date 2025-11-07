@@ -20,21 +20,24 @@ cargo build --release
 
 可执行文件位于 `target/release/mcp-windbg-rs.exe`
 
-📖 **详细配置说明请参阅 [配置指南](docs/SETUP_CN.md)，包含 Kiro IDE 和 VSCode 的配置方法**
+### VSCode 配置
 
-### 快速 MCP 客户端配置
+在 VSCode MCP 设置中添加（`.vscode/mcp.json` 或用户设置）：
 
 ```json
 {
-    "servers": {
-        "mcp_windbg_rs": {
-            "type": "stdio",
-            "command": "mcp-windbg-rs",
-            "env": {
-                "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-            }
-        }
+  "servers": {
+    "mcp-windbg": {
+      "type": "stdio",
+      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
+      "args": ["--verbose"],
+      "env": {
+        "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "120"
+      }
     }
+  },
+  "inputs": []
 }
 ```
 

@@ -21,8 +21,10 @@ async fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     // 初始化 tracing 日志订阅器
+    // 重要：日志必须输出到 stderr，因为 stdout 用于 MCP JSON-RPC 通信
     let log_level = if args.verbose { "debug" } else { "info" };
     tracing_subscriber::fmt()
+        .with_writer(std::io::stderr) // 强制输出到 stderr
         .with_env_filter(
             tracing_subscriber::EnvFilter::try_from_default_env()
                 .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new(log_level)),
@@ -56,9 +58,16 @@ async fn main() -> anyhow::Result<()> {
     });
 
     // 运行服务器
-    server.run().await?;
-
-    info!("MCP WinDbg Server stopped");
+    // serve_server 应该持续运行，如果它返回了说明连接关闭
+    match server.run().await {
+        Ok(_) => {
+            info!("MCP server shut down normally");
+        }
+        Err(e) => {
+            tracing::error!("MCP server error: {}", e);
+            return Err(e.into());
+        }
+    }
 
     Ok(())
 }
