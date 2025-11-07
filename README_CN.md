@@ -18,7 +18,11 @@
 cargo build --release
 ```
 
-### MCP 客户端配置
+可执行文件位于 `target/release/mcp-windbg-rs.exe`
+
+📖 **详细配置说明请参阅 [配置指南](docs/SETUP_CN.md)，包含 Kiro IDE 和 VSCode 的配置方法**
+
+### 快速 MCP 客户端配置
 
 ```json
 {

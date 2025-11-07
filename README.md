@@ -18,7 +18,11 @@ A high-performance Model Context Protocol server for Windows crash dump analysis
 cargo build --release
 ```
 
-### MCP Client Configuration
+The executable will be at `target/release/mcp-windbg-rs.exe`
+
+📖 **See [Setup Guide](docs/SETUP.md) for detailed configuration instructions for Kiro IDE and VSCode**
+
+### Quick MCP Client Configuration
 
 ```json
 {
