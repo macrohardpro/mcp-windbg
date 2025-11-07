@@ -97,8 +97,8 @@ impl RunWindbgCmdParams {
     /// 验证参数：确保 dump_path 和 connection_string 互斥
     pub fn validate(&self) -> Result<(), String> {
         match (&self.dump_path, &self.connection_string) {
-            (None, None) => Err("必须提供 dump_path 或 connection_string 之一".to_string()),
-            (Some(_), Some(_)) => Err("dump_path 和 connection_string 不能同时提供".to_string()),
+            (None, None) => Err("Either dump_path or connection_string must be provided".to_string()),
+            (Some(_), Some(_)) => Err("dump_path and connection_string cannot be provided together".to_string()),
             _ => Ok(()),
         }
     }

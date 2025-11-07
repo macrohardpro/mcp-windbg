@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 authors = ["MCP WinDbg Contributors"]
 description = "A high-performance Model Context Protocol server for Windows crash dump analysis"
-license = "MIT"
+license = "AGPL-3.0-or-later"
 repository = "https://github.com/yourusername/mcp-windbg-rs"
 
 [[bin]]
@@ -20,6 +20,7 @@ anyhow = "1.0"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 clap = { version = "4.5", features = ["derive"] }
+rmcp = { version = "0.8.5", features = ["transport-io", "server"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"

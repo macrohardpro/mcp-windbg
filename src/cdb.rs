@@ -67,8 +67,8 @@ impl CdbSession {
         // 查找 CDB 可执行文件
         let cdb_exe = utils::find_cdb_executable(cdb_path).ok_or(CdbError::ExecutableNotFound)?;
 
-        info!("使用 CDB: {}", cdb_exe.display());
-        info!("打开转储文件: {}", dump_path.display());
+        info!("Using CDB: {}", cdb_exe.display());
+        info!("Opening dump file: {}", dump_path.display());
 
         // 构建命令
         let mut cmd = Command::new(&cdb_exe);
@@ -94,12 +94,12 @@ impl CdbSession {
         let stdin = process
             .stdin
             .take()
-            .ok_or_else(|| CdbError::ProcessStartFailed("无法获取 stdin".to_string()))?;
+            .ok_or_else(|| CdbError::ProcessStartFailed("Failed to get stdin".to_string()))?;
 
         let stdout = process
             .stdout
             .take()
-            .ok_or_else(|| CdbError::ProcessStartFailed("无法获取 stdout".to_string()))?;
+            .ok_or_else(|| CdbError::ProcessStartFailed("Failed to get stdout".to_string()))?;
 
         let stdout_reader = Arc::new(Mutex::new(BufReader::new(stdout)));
 
@@ -123,7 +123,7 @@ impl CdbSession {
         // 等待 CDB 启动完成
         session.wait_for_ready().await?;
 
-        info!("CDB 会话已启动");
+        info!("CDB session started");
 
         Ok(session)
     }
@@ -152,8 +152,8 @@ impl CdbSession {
         // 查找 CDB 可执行文件
         let cdb_exe = utils::find_cdb_executable(cdb_path).ok_or(CdbError::ExecutableNotFound)?;
 
-        info!("使用 CDB: {}", cdb_exe.display());
-        info!("连接到远程目标: {}", connection_string);
+        info!("Using CDB: {}", cdb_exe.display());
+        info!("Connecting to remote target: {}", connection_string);
 
         // 构建命令
         let mut cmd = Command::new(&cdb_exe);
@@ -179,12 +179,12 @@ impl CdbSession {
         let stdin = process
             .stdin
             .take()
-            .ok_or_else(|| CdbError::ProcessStartFailed("无法获取 stdin".to_string()))?;
+            .ok_or_else(|| CdbError::ProcessStartFailed("Failed to get stdin".to_string()))?;
 
         let stdout = process
             .stdout
             .take()
-            .ok_or_else(|| CdbError::ProcessStartFailed("无法获取 stdout".to_string()))?;
+            .ok_or_else(|| CdbError::ProcessStartFailed("Failed to get stdout".to_string()))?;
 
         let stdout_reader = Arc::new(Mutex::new(BufReader::new(stdout)));
 
@@ -204,7 +204,7 @@ impl CdbSession {
         // 等待 CDB 启动完成
         session.wait_for_ready().await?;
 
-        info!("CDB 远程会话已启动");
+        info!("CDB remote session started");
 
         Ok(session)
     }
@@ -218,7 +218,7 @@ impl CdbSession {
     ///
     /// 读取输出直到看到 "CDB_READY" 标记
     async fn wait_for_ready(&mut self) -> Result<(), CdbError> {
-        debug!("等待 CDB 启动完成...");
+        debug!("Waiting for CDB to start...");
 
         let mut reader = self.stdout_reader.lock().await;
         let mut line = String::new();
@@ -234,7 +234,7 @@ impl CdbSession {
                     }
                     Ok(_) => {
                         if self.verbose {
-                            debug!("CDB 输出: {}", line.trim());
+                            debug!("CDB output: {}", line.trim());
                         }
                         if line.contains("CDB_READY") {
                             return Ok(());
@@ -265,7 +265,7 @@ impl CdbSession {
     /// # 错误
     /// 如果命令发送失败、超时或进程终止，返回错误
     pub async fn send_command(&mut self, command: &str) -> Result<Vec<String>, CdbError> {
-        debug!("执行命令: {}", command);
+        debug!("Executing command: {}", command);
 
         // 构建完整命令（包含完成标记）
         const MARKER: &str = "COMMAND_COMPLETED_MARKER_12345";
@@ -285,7 +285,7 @@ impl CdbSession {
         // 读取输出直到看到标记
         let output = self.read_until_marker(MARKER).await?;
 
-        debug!("命令执行完成，输出 {} 行", output.len());
+        debug!("Command execution completed, {} lines of output", output.len());
 
         Ok(output)
     }
@@ -340,7 +340,7 @@ impl CdbSession {
         match read_result {
             Ok(result) => result,
             Err(_) => {
-                warn!("命令执行超时 ({:?})", self.timeout);
+                warn!("Command execution timeout ({:?})", self.timeout);
                 Err(CdbError::CommandTimeout(self.timeout))
             }
         }
@@ -356,7 +356,7 @@ impl CdbSession {
     /// # 错误
     /// 如果无法发送退出命令或进程终止失败，返回错误
     pub async fn shutdown(mut self) -> Result<(), CdbError> {
-        info!("关闭 CDB 会话: {}", self.session_id);
+        info!("Closing CDB session: {}", self.session_id);
 
         // 根据会话类型发送不同的退出命令
         let quit_command = match self.session_type {
@@ -373,12 +373,12 @@ impl CdbSession {
 
         // 发送退出命令
         if let Err(e) = self.stdin.write_all(quit_command.as_bytes()).await {
-            warn!("发送退出命令失败: {}", e);
+            warn!("Failed to send quit command: {}", e);
             // 继续尝试终止进程
         }
 
         if let Err(e) = self.stdin.flush().await {
-            warn!("刷新 stdin 失败: {}", e);
+            warn!("Failed to flush stdin: {}", e);
         }
 
         // 等待进程终止（带超时）
@@ -386,17 +386,17 @@ impl CdbSession {
 
         match wait_result {
             Ok(Ok(status)) => {
-                info!("CDB 进程已退出，状态: {:?}", status);
+                info!("CDB process exited with status: {:?}", status);
                 Ok(())
             }
             Ok(Err(e)) => {
-                warn!("等待进程退出失败: {}", e);
+                warn!("Failed to wait for process exit: {}", e);
                 // 尝试强制终止
                 let _ = self.process.kill().await;
-                Err(CdbError::ProcessStartFailed(format!("进程终止失败: {}", e)))
+                Err(CdbError::ProcessStartFailed(format!("Failed to terminate process: {}", e)))
             }
             Err(_) => {
-                warn!("等待进程退出超时，强制终止");
+                warn!("Timeout waiting for process to exit, forcing termination");
                 // 超时，强制终止进程
                 let _ = self.process.kill().await;
                 Err(CdbError::CommandTimeout(Duration::from_secs(5)))
@@ -411,7 +411,7 @@ impl Drop for CdbSession {
         // 尝试终止进程（如果还在运行）
         // 注意：这是同步的 drop，所以我们只能尝试 kill
         let _ = self.process.start_kill();
-        debug!("CDB 会话 Drop: {}", self.session_id);
+        debug!("CDB session Drop: {}", self.session_id);
     }
 }
 

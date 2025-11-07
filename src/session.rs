@@ -33,7 +33,7 @@ impl SessionManager {
     /// # 返回
     /// 返回新创建的会话管理器
     pub fn new(default_timeout: Duration, verbose: bool) -> Self {
-        info!("创建会话管理器，超时: {:?}", default_timeout);
+        info!("Creating session manager, timeout: {:?}", default_timeout);
         Self {
             sessions: Arc::new(RwLock::new(HashMap::new())),
             default_timeout,
@@ -82,19 +82,19 @@ impl SessionManager {
             .to_string_lossy()
             .to_string();
 
-        debug!("请求转储会话: {}", session_id);
+        debug!("Requesting dump session: {}", session_id);
 
         // 检查会话是否已存在
         {
             let sessions = self.sessions.read().await;
             if let Some(session) = sessions.get(&session_id) {
-                info!("复用现有转储会话: {}", session_id);
+                info!("Reusing existing dump session: {}", session_id);
                 return Ok(Arc::clone(session));
             }
         }
 
         // 创建新会话
-        info!("创建新转储会话: {}", session_id);
+        info!("Creating new dump session: {}", session_id);
         let session = CdbSession::new_dump(
             dump_path,
             cdb_path,
@@ -112,7 +112,7 @@ impl SessionManager {
             sessions.insert(session_id.clone(), Arc::clone(&session_arc));
         }
 
-        info!("转储会话已创建并存储: {}", session_id);
+        info!("Dump session created and stored: {}", session_id);
 
         Ok(session_arc)
     }
@@ -139,19 +139,19 @@ impl SessionManager {
     ) -> Result<Arc<Mutex<CdbSession>>, SessionError> {
         let session_id = connection_string.to_string();
 
-        debug!("请求远程会话: {}", session_id);
+        debug!("Requesting remote session: {}", session_id);
 
         // 检查会话是否已存在
         {
             let sessions = self.sessions.read().await;
             if let Some(session) = sessions.get(&session_id) {
-                info!("复用现有远程会话: {}", session_id);
+                info!("Reusing existing remote session: {}", session_id);
                 return Ok(Arc::clone(session));
             }
         }
 
         // 创建新会话
-        info!("创建新远程会话: {}", session_id);
+        info!("Creating new remote session: {}", session_id);
         let session = CdbSession::new_remote(
             connection_string,
             cdb_path,
@@ -169,7 +169,7 @@ impl SessionManager {
             sessions.insert(session_id.clone(), Arc::clone(&session_arc));
         }
 
-        info!("远程会话已创建并存储: {}", session_id);
+        info!("Remote session created and stored: {}", session_id);
 
         Ok(session_arc)
     }
@@ -185,7 +185,7 @@ impl SessionManager {
     /// # 错误
     /// 如果会话不存在或关闭失败，返回错误
     pub async fn close_session(&self, session_id: &str) -> Result<(), SessionError> {
-        info!("关闭会话: {}", session_id);
+        info!("Closing session: {}", session_id);
 
         // 从存储中移除会话
         let session_arc = {
@@ -202,14 +202,14 @@ impl SessionManager {
                 // 成功获取独占访问权，关闭会话
                 let session = session_mutex.into_inner();
                 session.shutdown().await?;
-                info!("会话已关闭: {}", session_id);
+                info!("Session closed: {}", session_id);
             }
             Err(arc) => {
                 // 还有其他引用，放回去并记录警告
                 let mut sessions = self.sessions.write().await;
                 sessions.insert(session_id.to_string(), arc);
                 return Err(SessionError::InvalidSessionId(format!(
-                    "会话仍在使用中: {}",
+                    "Session still in use: {}",
                     session_id
                 )));
             }
@@ -226,7 +226,7 @@ impl SessionManager {
     /// # 错误
     /// 如果任何会话关闭失败，返回错误
     pub async fn close_all_sessions(&self) -> Result<(), SessionError> {
-        info!("关闭所有会话");
+        info!("Closing all sessions");
 
         // 获取所有会话 ID
         let session_ids: Vec<String> = {
@@ -235,17 +235,17 @@ impl SessionManager {
         };
 
         let count = session_ids.len();
-        info!("准备关闭 {} 个会话", count);
+        info!("Preparing to close {} sessions", count);
 
         // 逐个关闭会话
         for session_id in session_ids {
             if let Err(e) = self.close_session(&session_id).await {
                 // 记录错误但继续关闭其他会话
-                tracing::warn!("关闭会话失败 {}: {}", session_id, e);
+                tracing::warn!("Failed to close session {}: {}", session_id, e);
             }
         }
 
-        info!("所有会话已关闭");
+        info!("All sessions closed");
 
         Ok(())
     }

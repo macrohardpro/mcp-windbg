@@ -26,13 +26,13 @@ pub async fn handle_open_windbg_dump(
     manager: Arc<SessionManager>,
     params: OpenWindbgDumpParams,
 ) -> Result<ToolResponse, ToolError> {
-    info!("打开转储文件: {}", params.dump_path);
+    info!("Opening dump file: {}", params.dump_path);
 
     // 验证文件路径
     let dump_path = Path::new(&params.dump_path);
     if !dump_path.exists() {
         return Err(ToolError::InvalidParams(format!(
-            "转储文件不存在: {}",
+            "Dump file does not exist: {}",
             params.dump_path
         )));
     }
@@ -46,34 +46,34 @@ pub async fn handle_open_windbg_dump(
 
     // 构建输出
     let mut output_lines = Vec::new();
-    output_lines.push(format!("# 崩溃转储分析: {}", params.dump_path));
+    output_lines.push(format!("# Crash Dump Analysis: {}", params.dump_path));
     output_lines.push(String::new());
 
     // 执行 .lastevent 命令获取崩溃信息
-    debug!("执行 .lastevent 命令");
-    output_lines.push("## 最后事件".to_string());
+    debug!("Executing .lastevent command");
+    output_lines.push("## Last Event".to_string());
     output_lines.push("```".to_string());
     match session_guard.send_command(".lastevent").await {
         Ok(lines) => {
             output_lines.extend(lines);
         }
         Err(e) => {
-            output_lines.push(format!("错误: {}", e));
+            output_lines.push(format!("Error: {}", e));
         }
     }
     output_lines.push("```".to_string());
     output_lines.push(String::new());
 
     // 执行 !analyze -v 命令进行详细分析
-    debug!("执行 !analyze -v 命令");
-    output_lines.push("## 详细分析".to_string());
+    debug!("Executing !analyze -v command");
+    output_lines.push("## Detailed Analysis".to_string());
     output_lines.push("```".to_string());
     match session_guard.send_command("!analyze -v").await {
         Ok(lines) => {
             output_lines.extend(lines);
         }
         Err(e) => {
-            output_lines.push(format!("错误: {}", e));
+            output_lines.push(format!("Error: {}", e));
         }
     }
     output_lines.push("```".to_string());
@@ -81,15 +81,15 @@ pub async fn handle_open_windbg_dump(
 
     // 根据参数执行可选命令
     if params.include_stack_trace {
-        debug!("执行 kb 命令（堆栈跟踪）");
-        output_lines.push("## 堆栈跟踪".to_string());
+        debug!("Executing kb command (stack trace)");
+        output_lines.push("## Stack Trace".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("kb").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -97,15 +97,15 @@ pub async fn handle_open_windbg_dump(
     }
 
     if params.include_modules {
-        debug!("执行 lm 命令（模块列表）");
-        output_lines.push("## 加载的模块".to_string());
+        debug!("Executing lm command (module list)");
+        output_lines.push("## Loaded Modules".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("lm").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -113,15 +113,15 @@ pub async fn handle_open_windbg_dump(
     }
 
     if params.include_threads {
-        debug!("执行 ~ 命令（线程列表）");
-        output_lines.push("## 线程列表".to_string());
+        debug!("Executing ~ command (thread list)");
+        output_lines.push("## Thread List".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("~").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -131,7 +131,7 @@ pub async fn handle_open_windbg_dump(
     // 格式化输出为 Markdown
     let output = output_lines.join("\n");
 
-    info!("转储文件分析完成");
+    info!("Dump file analysis completed");
 
     Ok(ToolResponse::text(output))
 }
@@ -153,7 +153,7 @@ pub async fn handle_open_windbg_remote(
     manager: Arc<SessionManager>,
     params: OpenWindbgRemoteParams,
 ) -> Result<ToolResponse, ToolError> {
-    info!("连接到远程目标: {}", params.connection_string);
+    info!("Connecting to remote target: {}", params.connection_string);
 
     // 获取或创建会话
     let session = manager
@@ -164,34 +164,34 @@ pub async fn handle_open_windbg_remote(
 
     // 构建输出
     let mut output_lines = Vec::new();
-    output_lines.push(format!("# 远程调试会话: {}", params.connection_string));
+    output_lines.push(format!("# Remote Debugging Session: {}", params.connection_string));
     output_lines.push(String::new());
 
     // 执行 !peb 命令获取进程信息
-    debug!("执行 !peb 命令");
-    output_lines.push("## 进程环境块 (PEB)".to_string());
+    debug!("Executing !peb command");
+    output_lines.push("## Process Environment Block (PEB)".to_string());
     output_lines.push("```".to_string());
     match session_guard.send_command("!peb").await {
         Ok(lines) => {
             output_lines.extend(lines);
         }
         Err(e) => {
-            output_lines.push(format!("错误: {}", e));
+            output_lines.push(format!("Error: {}", e));
         }
     }
     output_lines.push("```".to_string());
     output_lines.push(String::new());
 
     // 执行 r 命令获取寄存器信息
-    debug!("执行 r 命令");
-    output_lines.push("## 寄存器".to_string());
+    debug!("Executing r command");
+    output_lines.push("## Registers".to_string());
     output_lines.push("```".to_string());
     match session_guard.send_command("r").await {
         Ok(lines) => {
             output_lines.extend(lines);
         }
         Err(e) => {
-            output_lines.push(format!("错误: {}", e));
+            output_lines.push(format!("Error: {}", e));
         }
     }
     output_lines.push("```".to_string());
@@ -199,15 +199,15 @@ pub async fn handle_open_windbg_remote(
 
     // 根据参数执行可选命令
     if params.include_stack_trace {
-        debug!("执行 kb 命令（堆栈跟踪）");
-        output_lines.push("## 堆栈跟踪".to_string());
+        debug!("Executing kb command (stack trace)");
+        output_lines.push("## Stack Trace".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("kb").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -215,15 +215,15 @@ pub async fn handle_open_windbg_remote(
     }
 
     if params.include_modules {
-        debug!("执行 lm 命令（模块列表）");
-        output_lines.push("## 加载的模块".to_string());
+        debug!("Executing lm command (module list)");
+        output_lines.push("## Loaded Modules".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("lm").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -231,15 +231,15 @@ pub async fn handle_open_windbg_remote(
     }
 
     if params.include_threads {
-        debug!("执行 ~ 命令（线程列表）");
-        output_lines.push("## 线程列表".to_string());
+        debug!("Executing ~ command (thread list)");
+        output_lines.push("## Thread List".to_string());
         output_lines.push("```".to_string());
         match session_guard.send_command("~").await {
             Ok(lines) => {
                 output_lines.extend(lines);
             }
             Err(e) => {
-                output_lines.push(format!("错误: {}", e));
+                output_lines.push(format!("Error: {}", e));
             }
         }
         output_lines.push("```".to_string());
@@ -249,7 +249,7 @@ pub async fn handle_open_windbg_remote(
     // 格式化输出为 Markdown
     let output = output_lines.join("\n");
 
-    info!("远程会话连接完成");
+    info!("Remote session connection completed");
 
     Ok(ToolResponse::text(output))
 }
@@ -274,7 +274,7 @@ pub async fn handle_run_windbg_cmd(
     // 验证参数
     params.validate().map_err(ToolError::InvalidParams)?;
 
-    info!("执行自定义命令: {}", params.command);
+    info!("Executing custom command: {}", params.command);
 
     // 根据参数类型获取会话
     let session = if let Some(dump_path) = &params.dump_path {
@@ -286,20 +286,20 @@ pub async fn handle_run_windbg_cmd(
             .await?
     } else {
         return Err(ToolError::InvalidParams(
-            "必须提供 dump_path 或 connection_string".to_string(),
+            "Either dump_path or connection_string must be provided".to_string(),
         ));
     };
 
     let mut session_guard = session.lock().await;
 
     // 执行命令
-    debug!("执行命令: {}", params.command);
+    debug!("Executing command: {}", params.command);
     let output_lines = session_guard.send_command(&params.command).await?;
 
     // 格式化输出
     let output = format!("```\n{}\n```", output_lines.join("\n"));
 
-    info!("命令执行完成");
+    info!("Command execution completed");
 
     Ok(ToolResponse::text(output))
 }
@@ -321,7 +321,7 @@ pub async fn handle_close_windbg_dump(
     manager: Arc<SessionManager>,
     params: CloseWindbgDumpParams,
 ) -> Result<ToolResponse, ToolError> {
-    info!("关闭转储会话: {}", params.dump_path);
+    info!("Closing dump session: {}", params.dump_path);
 
     // 生成会话 ID（与创建时相同的逻辑）
     let dump_path = Path::new(&params.dump_path);
@@ -334,10 +334,10 @@ pub async fn handle_close_windbg_dump(
     // 关闭会话
     manager.close_session(&session_id).await?;
 
-    info!("转储会话已关闭");
+    info!("Dump session closed");
 
     Ok(ToolResponse::text(format!(
-        "转储文件会话已关闭: {}",
+        "Dump file session closed: {}",
         params.dump_path
     )))
 }
@@ -359,15 +359,15 @@ pub async fn handle_close_windbg_remote(
     manager: Arc<SessionManager>,
     params: CloseWindbgRemoteParams,
 ) -> Result<ToolResponse, ToolError> {
-    info!("关闭远程会话: {}", params.connection_string);
+    info!("Closing remote session: {}", params.connection_string);
 
     // 关闭会话
     manager.close_session(&params.connection_string).await?;
 
-    info!("远程会话已关闭");
+    info!("Remote session closed");
 
     Ok(ToolResponse::text(format!(
-        "远程调试会话已关闭: {}",
+        "Remote debugging session closed: {}",
         params.connection_string
     )))
 }
@@ -387,7 +387,7 @@ pub async fn handle_close_windbg_remote(
 pub async fn handle_list_windbg_dumps(
     params: ListWindbgDumpsParams,
 ) -> Result<ToolResponse, ToolError> {
-    info!("列出转储文件");
+    info!("Listing dump files");
 
     // 确定搜索目录
     let search_dir = if let Some(dir_path) = &params.directory_path {
@@ -395,15 +395,15 @@ pub async fn handle_list_windbg_dumps(
     } else {
         // 使用默认转储路径
         crate::utils::get_local_dumps_path()
-            .ok_or_else(|| ToolError::InternalError("无法确定默认转储目录".to_string()))?
+            .ok_or_else(|| ToolError::InternalError("Unable to determine default dump directory".to_string()))?
     };
 
-    debug!("搜索目录: {}", search_dir.display());
+    debug!("Searching directory: {}", search_dir.display());
 
     // 检查目录是否存在
     if !search_dir.exists() {
         return Err(ToolError::InvalidParams(format!(
-            "目录不存在: {}",
+            "Directory does not exist: {}",
             search_dir.display()
         )));
     }
@@ -413,13 +413,13 @@ pub async fn handle_list_windbg_dumps(
 
     // 格式化输出
     let mut output_lines = Vec::new();
-    output_lines.push(format!("# 转储文件列表: {}", search_dir.display()));
+    output_lines.push(format!("# Dump File List: {}", search_dir.display()));
     output_lines.push(String::new());
 
     if dump_files.is_empty() {
-        output_lines.push("未找到转储文件。".to_string());
+        output_lines.push("No dump files found.".to_string());
     } else {
-        output_lines.push(format!("找到 {} 个转储文件：", dump_files.len()));
+        output_lines.push(format!("Found {} dump files:", dump_files.len()));
         output_lines.push(String::new());
 
         for (i, file_info) in dump_files.iter().enumerate() {
@@ -435,7 +435,7 @@ pub async fn handle_list_windbg_dumps(
 
     let output = output_lines.join("\n");
 
-    info!("找到 {} 个转储文件", dump_files.len());
+    info!("Found {} dump files", dump_files.len());
 
     Ok(ToolResponse::text(output))
 }

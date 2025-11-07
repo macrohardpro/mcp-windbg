@@ -149,14 +149,14 @@ pub fn find_dump_files(
     if !directory.exists() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::NotFound,
-            format!("目录不存在: {}", directory.display()),
+            format!("Directory does not exist: {}", directory.display()),
         ));
     }
 
     if !directory.is_dir() {
         return Err(std::io::Error::new(
             std::io::ErrorKind::InvalidInput,
-            format!("路径不是目录: {}", directory.display()),
+            format!("Path is not a directory: {}", directory.display()),
         ));
     }
 
