@@ -342,11 +342,29 @@ impl McpServer {
 
         // 使用 serve_server 启动服务器
         let transport = transport::stdio();
-        serve_server(self, transport)
-            .await
-            .map_err(|e| ServerError::ProtocolError(e.to_string()))?;
 
-        Ok(())
+        // serve_server 返回 RunningService，我们需要等待它运行
+        match serve_server(self, transport).await {
+            Ok(running_service) => {
+                info!("MCP server initialized successfully, waiting for requests...");
+
+                // 等待服务运行直到关闭
+                match running_service.waiting().await {
+                    Ok(quit_reason) => {
+                        info!("MCP server stopped: {:?}", quit_reason);
+                        Ok(())
+                    }
+                    Err(e) => {
+                        tracing::error!("MCP server task error: {}", e);
+                        Err(ServerError::ProtocolError(e.to_string()))
+                    }
+                }
+            }
+            Err(e) => {
+                tracing::error!("MCP server initialization error: {}", e);
+                Err(ServerError::ProtocolError(e.to_string()))
+            }
+        }
     }
 }
 
@@ -358,9 +376,7 @@ impl rmcp::ServerHandler for McpServer {
         InitializeResult {
             protocol_version: ProtocolVersion::default(),
             capabilities: ServerCapabilities {
-                tools: Some(ToolsCapability {
-                    list_changed: None,
-                }),
+                tools: Some(ToolsCapability { list_changed: None }),
                 ..Default::default()
             },
             server_info: Implementation {
@@ -370,7 +386,10 @@ impl rmcp::ServerHandler for McpServer {
                 title: None,
                 website_url: None,
             },
-            instructions: Some("WinDbg MCP Server - Provides Windows debugging tools for crash dump analysis".into()),
+            instructions: Some(
+                "WinDbg MCP Server - Provides Windows debugging tools for crash dump analysis"
+                    .into(),
+            ),
         }
     }
 
@@ -402,43 +421,73 @@ impl rmcp::ServerHandler for McpServer {
         // 调用工具处理器
         let response = match tool_name.as_ref() {
             "open_windbg_dump" => {
-                let params: OpenWindbgDumpParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: OpenWindbgDumpParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_open_windbg_dump(Arc::clone(&self.session_manager), params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?
             }
             "open_windbg_remote" => {
-                let params: OpenWindbgRemoteParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: OpenWindbgRemoteParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_open_windbg_remote(Arc::clone(&self.session_manager), params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?
             }
             "run_windbg_cmd" => {
-                let params: RunWindbgCmdParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: RunWindbgCmdParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_run_windbg_cmd(Arc::clone(&self.session_manager), params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?
             }
             "close_windbg_dump" => {
-                let params: CloseWindbgDumpParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: CloseWindbgDumpParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_close_windbg_dump(Arc::clone(&self.session_manager), params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?
             }
             "close_windbg_remote" => {
-                let params: CloseWindbgRemoteParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: CloseWindbgRemoteParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_close_windbg_remote(Arc::clone(&self.session_manager), params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?
             }
             "list_windbg_dumps" => {
-                let params: ListWindbgDumpsParams = serde_json::from_value(arguments)
-                    .map_err(|e| rmcp::ErrorData::invalid_params(format!("Failed to parse parameters: {}", e), None))?;
+                let params: ListWindbgDumpsParams =
+                    serde_json::from_value(arguments).map_err(|e| {
+                        rmcp::ErrorData::invalid_params(
+                            format!("Failed to parse parameters: {}", e),
+                            None,
+                        )
+                    })?;
                 tools::handle_list_windbg_dumps(params)
                     .await
                     .map_err(|e| rmcp::ErrorData::internal_error(e.to_string(), None))?

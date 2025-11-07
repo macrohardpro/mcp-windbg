@@ -20,21 +20,24 @@ cargo build --release
 
 The executable will be at `target/release/mcp-windbg-rs.exe`
 
-📖 **See [Setup Guide](docs/SETUP.md) for detailed configuration instructions for Kiro IDE and VSCode**
+### VSCode Configuration
 
-### Quick MCP Client Configuration
+Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
 
 ```json
 {
-    "servers": {
-        "mcp_windbg_rs": {
-            "type": "stdio",
-            "command": "mcp-windbg-rs",
-            "env": {
-                "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols"
-            }
-        }
+  "servers": {
+    "mcp-windbg": {
+      "type": "stdio",
+      "command": "D:\\workspace\\mcp-windbg\\target\\release\\mcp-windbg-rs.exe",
+      "args": ["--verbose"],
+      "env": {
+        "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "120"
+      }
     }
+  },
+  "inputs": []
 }
 ```
 
