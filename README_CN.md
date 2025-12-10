@@ -93,7 +93,8 @@ cargo build --release
 
 - `CDB_PATH` - 自定义 cdb.exe 路径
 - `_NT_SYMBOL_PATH` - Windows 符号路径
-- `MCP_WINDBG_TIMEOUT` - 命令超时时间（秒），默认：30
+- `MCP_WINDBG_TIMEOUT` - 命令执行超时时间（秒），默认：30
+- `MCP_WINDBG_INIT_TIMEOUT` - 初始化超时时间（秒），默认：120
 - `MCP_WINDBG_VERBOSE` - 启用详细日志（true/false）
 
 #### 命令行选项
@@ -102,10 +103,13 @@ cargo build --release
 mcp-windbg-rs [选项]
 
 选项:
-    --timeout <秒数>      命令超时时间（秒），默认：30
-    --verbose             启用详细日志
-    --help                显示帮助信息
+    --timeout <秒数>          命令执行超时时间（秒），默认：30
+    --init-timeout <秒数>     初始化超时时间（秒），默认：120
+    --verbose                 启用详细日志
+    --help                    显示帮助信息
 ```
+
+**注意**：初始化超时用于打开 dump 文件或连接远程目标时的等待时间。对于大型 dump 文件或需要下载符号的情况，可能需要更长的初始化时间。
 
 ### 使用示例
 

@@ -19,6 +19,8 @@ pub struct SessionManager {
     sessions: Arc<RwLock<HashMap<String, Arc<Mutex<CdbSession>>>>>,
     /// 默认命令超时时间
     default_timeout: Duration,
+    /// 默认初始化超时时间
+    default_init_timeout: Duration,
     /// 是否启用详细日志
     verbose: bool,
 }
@@ -28,15 +30,17 @@ impl SessionManager {
     ///
     /// # 参数
     /// * `default_timeout` - 默认命令执行超时时间
+    /// * `default_init_timeout` - 默认初始化超时时间
     /// * `verbose` - 是否启用详细日志
     ///
     /// # 返回
     /// 返回新创建的会话管理器
-    pub fn new(default_timeout: Duration, verbose: bool) -> Self {
-        info!("Creating session manager, timeout: {:?}", default_timeout);
+    pub fn new(default_timeout: Duration, default_init_timeout: Duration, verbose: bool) -> Self {
+        info!("Creating session manager, timeout: {:?}, init_timeout: {:?}", default_timeout, default_init_timeout);
         Self {
             sessions: Arc::new(RwLock::new(HashMap::new())),
             default_timeout,
+            default_init_timeout,
             verbose,
         }
     }
@@ -100,6 +104,7 @@ impl SessionManager {
             cdb_path,
             symbols_path,
             self.default_timeout,
+            self.default_init_timeout,
             self.verbose,
         )
         .await?;
@@ -157,6 +162,7 @@ impl SessionManager {
             cdb_path,
             symbols_path,
             self.default_timeout,
+            self.default_init_timeout,
             self.verbose,
         )
         .await?;
@@ -257,20 +263,20 @@ mod tests {
 
     #[tokio::test]
     async fn test_session_manager_new() {
-        let manager = SessionManager::new(Duration::from_secs(30), false);
+        let manager = SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false);
         assert_eq!(manager.active_session_count().await, 0);
     }
 
     #[tokio::test]
     async fn test_active_session_count() {
-        let manager = SessionManager::new(Duration::from_secs(30), false);
+        let manager = SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false);
         let count = manager.active_session_count().await;
         assert_eq!(count, 0);
     }
 
     #[tokio::test]
     async fn test_get_or_create_dump_session_file_not_found() {
-        let manager = SessionManager::new(Duration::from_secs(30), false);
+        let manager = SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false);
         let result = manager
             .get_or_create_dump_session(Path::new("nonexistent.dmp"), None, None)
             .await;
@@ -284,7 +290,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_close_session_not_found() {
-        let manager = SessionManager::new(Duration::from_secs(30), false);
+        let manager = SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false);
         let result = manager.close_session("nonexistent").await;
 
         assert!(result.is_err());
@@ -296,7 +302,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_close_all_sessions_empty() {
-        let manager = SessionManager::new(Duration::from_secs(30), false);
+        let manager = SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false);
         let result = manager.close_all_sessions().await;
         assert!(result.is_ok());
     }

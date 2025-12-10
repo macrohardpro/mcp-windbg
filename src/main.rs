@@ -10,6 +10,10 @@ struct Args {
     #[arg(long, default_value = "30")]
     timeout: u64,
 
+    /// 初始化超时时间（秒）
+    #[arg(long, default_value = "120")]
+    init_timeout: u64,
+
     /// 启用详细日志
     #[arg(long, default_value = "false")]
     verbose: bool,
@@ -39,6 +43,7 @@ async fn main() -> anyhow::Result<()> {
 
     // 命令行参数覆盖配置
     config.timeout = std::time::Duration::from_secs(args.timeout);
+    config.init_timeout = std::time::Duration::from_secs(args.init_timeout);
     config.verbose = args.verbose;
 
     // 创建并启动服务器

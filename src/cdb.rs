@@ -36,6 +36,8 @@ pub struct CdbSession {
     stdout_reader: Arc<Mutex<BufReader<ChildStdout>>>,
     /// 命令执行超时时间
     timeout: Duration,
+    /// 初始化超时时间（用于启动和符号加载）
+    init_timeout: Duration,
     /// 是否启用详细日志
     verbose: bool,
     /// 会话类型
@@ -50,6 +52,7 @@ impl CdbSession {
     /// * `cdb_path` - 可选的自定义 CDB 路径
     /// * `symbols_path` - 可选的符号路径
     /// * `timeout` - 命令执行超时时间
+    /// * `init_timeout` - 初始化超时时间
     /// * `verbose` - 是否启用详细日志
     ///
     /// # 返回
@@ -62,6 +65,7 @@ impl CdbSession {
         cdb_path: Option<&Path>,
         symbols_path: Option<&str>,
         timeout: Duration,
+        init_timeout: Duration,
         verbose: bool,
     ) -> Result<Self, CdbError> {
         // 查找 CDB 可执行文件
@@ -116,6 +120,7 @@ impl CdbSession {
             stdin,
             stdout_reader,
             timeout,
+            init_timeout,
             verbose,
             session_type: SessionType::Dump,
         };
@@ -135,6 +140,7 @@ impl CdbSession {
     /// * `cdb_path` - 可选的自定义 CDB 路径
     /// * `symbols_path` - 可选的符号路径
     /// * `timeout` - 命令执行超时时间
+    /// * `init_timeout` - 初始化超时时间
     /// * `verbose` - 是否启用详细日志
     ///
     /// # 返回
@@ -147,6 +153,7 @@ impl CdbSession {
         cdb_path: Option<&Path>,
         symbols_path: Option<&str>,
         timeout: Duration,
+        init_timeout: Duration,
         verbose: bool,
     ) -> Result<Self, CdbError> {
         // 查找 CDB 可执行文件
@@ -197,6 +204,7 @@ impl CdbSession {
             stdin,
             stdout_reader,
             timeout,
+            init_timeout,
             verbose,
             session_type: SessionType::Remote,
         };
@@ -218,13 +226,14 @@ impl CdbSession {
     ///
     /// 读取输出直到看到 "CDB_READY" 标记
     async fn wait_for_ready(&mut self) -> Result<(), CdbError> {
-        debug!("Waiting for CDB to start...");
+        debug!("Waiting for CDB to start (timeout: {:?})...", self.init_timeout);
 
         let mut reader = self.stdout_reader.lock().await;
         let mut line = String::new();
 
-        // 使用超时等待启动完成
-        let wait_result = tokio::time::timeout(self.timeout, async {
+        // 使用配置的初始化超时
+        // 对于大型 dump 文件或需要下载符号的情况，可能需要更长时间
+        let wait_result = tokio::time::timeout(self.init_timeout, async {
             loop {
                 line.clear();
                 match reader.read_line(&mut line).await {
@@ -250,7 +259,10 @@ impl CdbSession {
 
         match wait_result {
             Ok(result) => result,
-            Err(_) => Err(CdbError::CommandTimeout(self.timeout)),
+            Err(_) => {
+                warn!("CDB initialization timeout after {:?}", self.init_timeout);
+                Err(CdbError::CommandTimeout(self.init_timeout))
+            }
         }
     }
 
@@ -268,8 +280,15 @@ impl CdbSession {
         debug!("Executing command: {}", command);
 
         // 构建完整命令（包含完成标记）
-        const MARKER: &str = "COMMAND_COMPLETED_MARKER_12345";
-        let full_command = format!("{}\n.echo {}\n", command.trim(), MARKER);
+        // 使用唯一的标记以避免与输出内容冲突
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let timestamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
+        let marker = format!("CMD_DONE_{}", timestamp);
+        
+        let full_command = format!("{}\n.echo {}\n", command.trim(), marker);
 
         // 发送命令
         self.stdin
@@ -283,7 +302,7 @@ impl CdbSession {
             .map_err(|e| CdbError::CommandSendFailed(e.to_string()))?;
 
         // 读取输出直到看到标记
-        let output = self.read_until_marker(MARKER).await?;
+        let output = self.read_until_marker(&marker).await?;
 
         debug!("Command execution completed, {} lines of output", output.len());
 
@@ -304,6 +323,9 @@ impl CdbSession {
         let mut output = Vec::new();
         let mut reader = self.stdout_reader.lock().await;
         let mut line = String::new();
+        let mut lines_read = 0;
+
+        debug!("Waiting for marker: {}", marker);
 
         // 使用超时读取输出
         let read_result = tokio::time::timeout(self.timeout, async {
@@ -312,24 +334,36 @@ impl CdbSession {
                 match reader.read_line(&mut line).await {
                     Ok(0) => {
                         // EOF - 进程终止
+                        warn!("CDB process terminated unexpectedly (read {} lines)", lines_read);
                         return Err(CdbError::ProcessTerminated);
                     }
                     Ok(_) => {
+                        lines_read += 1;
                         let trimmed = line.trim();
 
                         if self.verbose {
-                            debug!("CDB: {}", trimmed);
+                            debug!("CDB[{}]: {}", lines_read, trimmed);
                         }
 
                         // 检查是否是完成标记
                         if trimmed.contains(marker) {
+                            debug!("Found marker after {} lines", lines_read);
                             return Ok(output);
                         }
 
                         // 添加到输出（保留原始行，包括空行）
                         output.push(line.trim_end().to_string());
+                        
+                        // 防止无限输出导致内存溢出
+                        if output.len() > 100000 {
+                            warn!("Output exceeded 100k lines, stopping read");
+                            return Err(CdbError::CommandSendFailed(
+                                "Output too large".to_string()
+                            ));
+                        }
                     }
                     Err(e) => {
+                        warn!("IO error after reading {} lines: {}", lines_read, e);
                         return Err(CdbError::IoError(e));
                     }
                 }
@@ -337,13 +371,13 @@ impl CdbSession {
         })
         .await;
 
-        match read_result {
-            Ok(result) => result,
-            Err(_) => {
-                warn!("Command execution timeout ({:?})", self.timeout);
-                Err(CdbError::CommandTimeout(self.timeout))
-            }
-        }
+        read_result.map_err(|_| {
+            warn!(
+                "Command execution timeout ({:?}) after reading {} lines",
+                self.timeout, lines_read
+            );
+            CdbError::CommandTimeout(self.timeout)
+        })?
     }
 
     /// 关闭会话
@@ -421,6 +455,7 @@ impl std::fmt::Debug for CdbSession {
         f.debug_struct("CdbSession")
             .field("session_id", &self.session_id)
             .field("timeout", &self.timeout)
+            .field("init_timeout", &self.init_timeout)
             .field("verbose", &self.verbose)
             .field("session_type", &self.session_type)
             .finish_non_exhaustive()

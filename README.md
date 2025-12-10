@@ -93,7 +93,8 @@ Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
 
 - `CDB_PATH` - Custom path to cdb.exe
 - `_NT_SYMBOL_PATH` - Windows symbol path
-- `MCP_WINDBG_TIMEOUT` - Command timeout in seconds (default: 30)
+- `MCP_WINDBG_TIMEOUT` - Command execution timeout in seconds (default: 30)
+- `MCP_WINDBG_INIT_TIMEOUT` - Initialization timeout in seconds (default: 120)
 - `MCP_WINDBG_VERBOSE` - Enable verbose logging (true/false)
 
 #### Command Line Options
@@ -102,10 +103,13 @@ Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
 mcp-windbg-rs [OPTIONS]
 
 OPTIONS:
-    --timeout <SECONDS>   Command timeout in seconds (default: 30)
-    --verbose             Enable verbose logging
-    --help                Print help information
+    --timeout <SECONDS>       Command execution timeout in seconds (default: 30)
+    --init-timeout <SECONDS>  Initialization timeout in seconds (default: 120)
+    --verbose                 Enable verbose logging
+    --help                    Print help information
 ```
+
+**Note**: The initialization timeout is used when opening dump files or connecting to remote targets. Larger dump files or symbol downloads may require more time.
 
 ### Usage Examples
 

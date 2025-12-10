@@ -20,6 +20,8 @@ pub struct ServerConfig {
     pub symbols_path: Option<String>,
     /// 命令执行超时时间
     pub timeout: Duration,
+    /// 初始化超时时间
+    pub init_timeout: Duration,
     /// 是否启用详细日志
     pub verbose: bool,
 }
@@ -30,6 +32,7 @@ impl Default for ServerConfig {
             cdb_path: None,
             symbols_path: None,
             timeout: Duration::from_secs(30),
+            init_timeout: Duration::from_secs(120),
             verbose: false,
         }
     }
@@ -50,10 +53,17 @@ impl ServerConfig {
             config.symbols_path = Some(path);
         }
 
-        // 读取超时时间
+        // 读取命令超时时间
         if let Ok(timeout_str) = std::env::var("MCP_WINDBG_TIMEOUT") {
             if let Ok(timeout_secs) = timeout_str.parse::<u64>() {
                 config.timeout = Duration::from_secs(timeout_secs);
+            }
+        }
+
+        // 读取初始化超时时间
+        if let Ok(timeout_str) = std::env::var("MCP_WINDBG_INIT_TIMEOUT") {
+            if let Ok(timeout_secs) = timeout_str.parse::<u64>() {
+                config.init_timeout = Duration::from_secs(timeout_secs);
             }
         }
 
@@ -88,7 +98,11 @@ impl McpServer {
         info!("Creating MCP server");
         info!("Configuration: {:?}", config);
 
-        let session_manager = Arc::new(SessionManager::new(config.timeout, config.verbose));
+        let session_manager = Arc::new(SessionManager::new(
+            config.timeout,
+            config.init_timeout,
+            config.verbose,
+        ));
 
         Self {
             session_manager,

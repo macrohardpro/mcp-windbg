@@ -447,7 +447,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_open_windbg_dump_file_not_found() {
-        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), false));
+        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false));
         let params = OpenWindbgDumpParams {
             dump_path: "nonexistent.dmp".to_string(),
             include_stack_trace: false,
@@ -461,7 +461,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_run_windbg_cmd_invalid_params() {
-        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), false));
+        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false));
         let params = RunWindbgCmdParams {
             dump_path: None,
             connection_string: None,
@@ -474,7 +474,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_handle_close_windbg_dump_not_found() {
-        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), false));
+        let manager = Arc::new(SessionManager::new(Duration::from_secs(30), Duration::from_secs(120), false));
         let params = CloseWindbgDumpParams {
             dump_path: "nonexistent.dmp".to_string(),
         };

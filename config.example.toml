@@ -3,7 +3,13 @@
 
 [server]
 # Command timeout in seconds (default: 30)
+# This timeout applies to regular WinDbg commands
 timeout_seconds = 30
+
+# Initialization timeout in seconds (default: 120)
+# This timeout applies when opening dump files or connecting to remote targets
+# Larger dump files or symbol downloads may require more time
+# init_timeout_seconds = 120
 
 # Enable verbose logging (default: false)
 verbose = false
