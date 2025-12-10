@@ -31,7 +31,8 @@ Add to your VSCode MCP settings (`.vscode/mcp.json`):
       "args": ["--verbose"],
       "env": {
         "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "120"
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180"
       }
     }
   },
@@ -39,7 +40,9 @@ Add to your VSCode MCP settings (`.vscode/mcp.json`):
 }
 ```
 
-**Note**: If you added the executable to PATH, you can use just `mcp-windbg-rs` as the command.
+**Notes**: 
+- If you added the executable to PATH, you can use just `mcp-windbg-rs` as the command.
+- For large dump files (>100MB) or slow symbol downloads, increase `MCP_WINDBG_INIT_TIMEOUT`.
 
 ## Verification
 
@@ -54,12 +57,14 @@ Add to your VSCode MCP settings (`.vscode/mcp.json`):
 
 - `CDB_PATH` - Custom path to cdb.exe (if not in default location)
 - `_NT_SYMBOL_PATH` - Symbol server path (highly recommended)
-- `MCP_WINDBG_TIMEOUT` - Command timeout in seconds (default: 30)
+- `MCP_WINDBG_TIMEOUT` - Command execution timeout in seconds (default: 30)
+- `MCP_WINDBG_INIT_TIMEOUT` - Initialization timeout in seconds (default: 120)
 - `MCP_WINDBG_VERBOSE` - Enable verbose logging (true/false)
 
 ### Command Line Arguments
 
-- `--timeout <SECONDS>` - Override timeout setting
+- `--timeout <SECONDS>` - Override command execution timeout
+- `--init-timeout <SECONDS>` - Override initialization timeout
 - `--verbose` - Enable verbose logging
 - `--help` - Show help information
 

@@ -31,7 +31,8 @@
       "args": ["--verbose"],
       "env": {
         "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "120"
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180"
       }
     }
   },
@@ -39,7 +40,9 @@
 }
 ```
 
-**注意**：如果已将可执行文件添加到 PATH，可以直接使用 `mcp-windbg-rs` 作为命令。
+**注意**：
+- 如果已将可执行文件添加到 PATH，可以直接使用 `mcp-windbg-rs` 作为命令。
+- 对于大型 dump 文件（>100MB）或符号下载较慢的情况，可以增加 `MCP_WINDBG_INIT_TIMEOUT`。
 
 ## 验证
 
@@ -54,12 +57,14 @@
 
 - `CDB_PATH` - 自定义 cdb.exe 路径（如果不在默认位置）
 - `_NT_SYMBOL_PATH` - 符号服务器路径（强烈推荐）
-- `MCP_WINDBG_TIMEOUT` - 命令超时时间（秒），默认：30
+- `MCP_WINDBG_TIMEOUT` - 命令执行超时时间（秒），默认：30
+- `MCP_WINDBG_INIT_TIMEOUT` - 初始化超时时间（秒），默认：120
 - `MCP_WINDBG_VERBOSE` - 启用详细日志（true/false）
 
 ### 命令行参数
 
-- `--timeout <秒数>` - 覆盖超时设置
+- `--timeout <秒数>` - 覆盖命令执行超时设置
+- `--init-timeout <秒数>` - 覆盖初始化超时设置
 - `--verbose` - 启用详细日志
 - `--help` - 显示帮助信息
 

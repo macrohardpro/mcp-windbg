@@ -33,13 +33,16 @@ Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
       "args": ["--verbose"],
       "env": {
         "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "120"
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180"
       }
     }
   },
   "inputs": []
 }
 ```
+
+**Note**: For large dump files or slow symbol downloads, increase `MCP_WINDBG_INIT_TIMEOUT` (default: 120s).
 
 ## Roadmap
 
@@ -88,6 +91,27 @@ Add to your VSCode MCP settings (`.vscode/mcp.json` or user settings):
 - `list_windbg_dumps` - List available crash dumps
 
 ### Configuration
+
+#### Alternative Configuration Format
+
+For Claude Desktop, Cline, or other MCP clients that use `mcpServers` format:
+
+```json
+{
+  "mcpServers": {
+    "mcp-windbg-rs": {
+      "command": "mcp-windbg-rs",
+      "args": [],
+      "env": {
+        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180",
+        "MCP_WINDBG_VERBOSE": "false"
+      }
+    }
+  }
+}
+```
 
 #### Environment Variables
 

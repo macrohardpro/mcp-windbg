@@ -5,7 +5,8 @@
       "args": [],
       "env": {
         "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "30",
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180",
         "MCP_WINDBG_VERBOSE": "false"
       }
     }

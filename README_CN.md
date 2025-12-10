@@ -33,13 +33,16 @@ cargo build --release
       "args": ["--verbose"],
       "env": {
         "_NT_SYMBOL_PATH": "SRV*D:\\Symbols*https://msdl.microsoft.com/download/symbols",
-        "MCP_WINDBG_TIMEOUT": "120"
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180"
       }
     }
   },
   "inputs": []
 }
 ```
+
+**注意**：对于大型 dump 文件或符号下载较慢的情况，可以增加 `MCP_WINDBG_INIT_TIMEOUT`（默认：120秒）。
 
 ## 开发路线图
 
@@ -88,6 +91,27 @@ cargo build --release
 - `list_windbg_dumps` - 列出可用的崩溃转储文件
 
 ### 配置
+
+#### 其他配置格式
+
+适用于 Claude Desktop、Cline 或其他使用 `mcpServers` 格式的 MCP 客户端：
+
+```json
+{
+  "mcpServers": {
+    "mcp-windbg-rs": {
+      "command": "mcp-windbg-rs",
+      "args": [],
+      "env": {
+        "_NT_SYMBOL_PATH": "SRV*C:\\Symbols*https://msdl.microsoft.com/download/symbols",
+        "MCP_WINDBG_TIMEOUT": "60",
+        "MCP_WINDBG_INIT_TIMEOUT": "180",
+        "MCP_WINDBG_VERBOSE": "false"
+      }
+    }
+  }
+}
+```
 
 #### 环境变量
 
