@@ -5,6 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.0] - 2026-05-20
+
+### Added
+- Web Dump Debugger (`web-dump-debugger` binary) — HTTP-based crash dump analysis platform with web UI
+- Upload crash dump archives (.zip, .7z, .tar.gz, .tgz) via browser, auto-extract and analyze with LLM orchestration
+- Real-time analysis progress bar — parses AI turn progress and streams percentage via SSE (extracting→15%, analyzing→25%, per-turn→25-95%, complete→100%)
+- Dual-view Chinese reports — AI generates "研发分析报告" (R&D technical analysis) and "售后支持报告" (customer support summary) with tab navigation
+- Chinese web UI localization — all page text, status messages, and AI prompts in Chinese
+- Session management — per-upload isolated workspaces with configurable TTL and automatic cleanup
+- Per-IP rate limiting with sliding window
+- Health check endpoint (`GET /health`) returning active session count and uptime
+- `config.example.toml` with inline documentation for all settings
+- Deployment guide (`docs/WEB_DEPLOYMENT.md`)
+
+### Fixed
+- Multipart upload truncation — file now saved before returning HTTP response, preventing connection-close truncation
+- Axum default 2MB body limit — now properly overridden to match configured `max_upload_size`
+- Config TOML deserialization — flattened server fields to top level for correct parsing
+
+### Changed
+- Bumped version to 0.3.0
+- Rewrote AI system prompt in Chinese with structured dual-section output format
+- Markdown reports rendered as styled HTML with GitHub-like CSS and view switching tabs
+
 ## [0.2.0] - 2026-03-31
 
 ### Added
