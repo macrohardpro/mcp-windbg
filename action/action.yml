@@ -12,7 +12,7 @@ inputs:
     description: 'LLM API base URL (e.g. https://api.openai.com/v1)'
     required: true
   model:
-    description: 'LLM model name (e.g. gpt-4o)'
+    description: 'LLM model name (e.g. deepseek-v4-pro)'
     required: true
   issue-number:
     description: 'Issue number to post analysis comment to'

@@ -11,11 +11,11 @@ on:
       model:
         description: 'LLM model name'
         required: false
-        default: 'glm-4-flash'
+        default: 'deepseek-v4-pro'
       api-base:
         description: 'LLM API base URL'
         required: false
-        default: 'https://open.bigmodel.cn/api/paas/v4'
+        default: 'https://api.deepseek.com/v1'
 
 jobs:
   analyze:
@@ -28,7 +28,7 @@ jobs:
       - uses: ./action
         with:
           api_key: ${{ secrets.AI_API_KEY }}
-          api_base: ${{ github.event.inputs.api-base || 'https://open.bigmodel.cn/api/paas/v4' }}
-          model: ${{ github.event.inputs.model || 'glm-4-flash' }}
+          api_base: ${{ github.event.inputs.api-base || 'https://api.deepseek.com/v1' }}
+          model: ${{ github.event.inputs.model || 'deepseek-v4-pro' }}
           extra-files: ${{ github.event.inputs.extra-files || '' }}
           post-comment: 'true'
