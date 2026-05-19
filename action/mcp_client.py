@@ -548,6 +548,8 @@ class AnalysisOrchestrator:
 def main():
     """Main entry point — read config from env vars, run analysis, write output."""
     print("::group::Step 4 - AI Crash Dump Analysis", flush=True)
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
 
     # -- Read configuration from environment variables -----------------------
     api_key = os.environ.get("API_KEY", "")
