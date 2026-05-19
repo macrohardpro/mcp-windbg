@@ -33,7 +33,7 @@ workspace_root = "C:\\Temp\\web-dump-debugger"
 
 [llm]
 # API key for the LLM service (required)
-api_key = "sk-45b2c1ae438f44ae90b6768abf0b9369"
+api_key = "sk-keyxxxxxxx"
 
 # API base URL (DeepSeek API endpoint)
 api_base = "https://api.deepseek.com"
