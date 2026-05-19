@@ -420,6 +420,31 @@ class AnalysisOrchestrator:
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.turns_used = 0
         self.estimated_tokens = 0
+        self.partial_report = None
+
+    def _build_partial_report(self, messages):
+        """Extract partial analysis content from incomplete conversation."""
+        parts = []
+
+        # Find the last assistant text content (not tool_calls only)
+        for m in reversed(messages):
+            if m.get("role") == "assistant" and m.get("content"):
+                parts.append(m["content"])
+                break
+
+        # Summarize what tools were invoked
+        tool_names = []
+        for m in messages:
+            if m.get("role") == "assistant" and m.get("tool_calls"):
+                for tc in m.get("tool_calls", []):
+                    name = tc.get("function", {}).get("name", "")
+                    if name and name not in tool_names:
+                        tool_names.append(name)
+
+        if tool_names:
+            parts.append("\n\n---\n*Analysis was in progress. Tools used: {}*".format(", ".join(tool_names)))
+
+        return "\n".join(parts) if parts else ""
 
     def run(self, user_message):
         """Execute the AI analysis loop.
@@ -443,6 +468,7 @@ class AnalysisOrchestrator:
             elapsed = time.time() - start_time
             if elapsed > self._timeout:
                 log(f"Timeout reached ({elapsed:.0f}s > {self._timeout}s)")
+                self.partial_report = self._build_partial_report(messages)
                 raise TimeoutError(f"Analysis timed out after {elapsed:.0f}s")
 
             self.turns_used = turn
@@ -510,14 +536,9 @@ class AnalysisOrchestrator:
             return content or "(No analysis produced)"
 
         # max_turns exhausted
-        log(f"Max turns ({self._max_turns}) reached.")
-        # Return whatever the last assistant message was
-        last_content = ""
-        for m in reversed(messages):
-            if m.get("role") == "assistant" and m.get("content"):
-                last_content = m["content"]
-                break
-        return last_content or "(Analysis incomplete — max turns reached)"
+        log(f"Max turns ({self._max_turns}) reached — returning partial analysis.")
+        partial = self._build_partial_report(messages)
+        return partial or "(Analysis incomplete — max turns reached)"
 
 
 # ============================================================================
@@ -617,8 +638,13 @@ def main():
         exit_code = 1
     except TimeoutError as exc:
         print(f"::error::Analysis timed out: {exc}", flush=True)
-        report = f"# Analysis Timed Out\n\n{exc}"
-        exit_code = 1
+        partial = orchestrator.partial_report
+        if partial:
+            report = f"# Analysis Report (Partial — Timed Out)\n\n> ⚠️ {exc}\n\n{partial}"
+            exit_code = 0
+        else:
+            report = f"# Analysis Timed Out\n\n{exc}"
+            exit_code = 1
     except Exception as exc:
         print(f"::error::Unexpected error: {exc}", flush=True)
         report = f"# Analysis Failed\n\nUnexpected error: {exc}"
