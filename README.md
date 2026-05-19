@@ -168,6 +168,54 @@ Close the debug session for C:\MyApp\app.exe
 
 **Command timeout** — Increase with `--timeout 60` or `MCP_WINDBG_TIMEOUT=60`. Large dumps and symbol downloads may need higher `MCP_WINDBG_INIT_TIMEOUT`.
 
+## Web Dump Debugger
+
+The project also ships a **web-based crash dump analysis service** (`web-dump-debugger`) that provides a browser UI for uploading, analyzing, and reporting on crash dumps.
+
+### Features
+
+- **Web upload** — Upload `.zip`, `.7z`, or `.tar.gz` archives containing dump files through a browser
+- **Automatic extraction** — Archives are extracted and scanned for `.dmp`, `.pdb`, and source files
+- **LLM-powered analysis** — Uses the same `mcp_client.py` orchestration as the GitHub Actions workflow
+- **Real-time progress** — Server-Sent Events (SSE) stream live analysis progress to the browser
+- **HTML reports** — Markdown analysis output is rendered to HTML with syntax highlighting
+- **Rate limiting** — Per-IP upload rate limiting with sliding window algorithm
+- **Session management** — Isolated per-session workspaces with automatic cleanup
+
+### Quick Start
+
+```bash
+# Build both binaries
+cargo build --release
+
+# Create a config file (edit llm.api_key first)
+cp config.example.toml config.toml
+
+# Start the web server
+./target/release/web-dump-debugger --config config.toml
+```
+
+Then open `http://localhost:8080` in your browser.
+
+### Configuration
+
+See [config.example.toml](config.example.toml) for all options. The server supports both TOML file and environment variable configuration.
+
+### API Endpoints
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Upload form HTML page |
+| `POST` | `/upload` | Upload crash dump archive (multipart/form-data) |
+| `GET` | `/progress/:id` | SSE progress stream |
+| `GET` | `/report/:id` | HTML report page |
+| `GET` | `/download/:id` | Download raw Markdown report |
+| `GET` | `/health` | Health check (JSON) |
+
+### Deployment
+
+See [docs/WEB_DEPLOYMENT.md](docs/WEB_DEPLOYMENT.md) for production deployment guidance.
+
 ## Related
 
 - [mcp-windbg (Python)](https://github.com/svnscha/mcp-windbg) — Original Python implementation

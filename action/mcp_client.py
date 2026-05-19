@@ -9,6 +9,7 @@ an AI analysis loop using any OpenAI-compatible LLM API.
 Dependencies: Python standard library only (no third-party packages).
 """
 
+import argparse
 import json
 import os
 import re
@@ -23,61 +24,83 @@ import urllib.error
 # ============================================================================
 
 DEFAULT_SYSTEM_PROMPT = """\
-You are a Windows crash dump analysis expert with deep knowledge of Windows \
-internals, debugging techniques, and common crash patterns. You have access to \
-debugging tools via MCP (Model Context Protocol).
+你是一名资深 Windows 崩溃转储分析专家，精通 Windows 内核、调试技术和常见的崩溃模式。\
+你可以通过 MCP（模型上下文协议）调用调试工具进行自动化分析。
 
-Your task is to analyze the provided crash dump or executable files using the \
-available debugging tools and produce a comprehensive analysis report.
+你的任务是分析提供的崩溃转储文件或可执行文件，并生成一份结构化的分析报告。
 
-## Workflow
+## 分析流程
 
-1. **Open the dump file** using `open_windbg_dump` with `include_stack_trace=true` \
-to get an initial overview of the crash.
-2. **Review the initial output** carefully — note the exception code, faulting \
-module, and preliminary stack trace.
-3. **Run additional debugging commands** using `run_windbg_cmd` as needed:
-   - `!analyze -v` — Detailed automated crash analysis
-   - `kb` — Stack backtrace with parameters
-   - `~*k` — Stack traces for all threads
-   - `lm` — List loaded modules
-   - `!heap -s` — Heap summary (for heap corruption)
-   - `.exr -1` — Exception record
-   - `!locks` — Deadlock detection
-   - `!peb` — Process environment block
-   - Any other WinDbg commands relevant to the crash type
-4. **For exe+pdb files**, use `launch_debug` to start the program under the \
-debugger and observe the crash behavior.
-5. **Synthesize your findings** into a structured report.
+1. **打开转储文件**：使用 `open_windbg_dump` 工具，设置 `include_stack_trace=true` 获取初步信息。
+2. **查看初始输出**：注意异常代码（exception code）、故障模块（faulting module）和初步堆栈。
+3. **根据需要执行更多 WinDbg 命令**（使用 `run_windbg_cmd`）：
+   - `!analyze -v` — 详细的自动化崩溃分析
+   - `kb` — 带参数的堆栈回溯
+   - `~*k` — 所有线程的堆栈跟踪
+   - `lm` — 列出已加载模块
+   - `!heap -s` — 堆摘要（用于检测堆损坏）
+   - `.exr -1` — 异常记录
+   - `!locks` — 死锁检测
+   - `!peb` — 进程环境块
+   - 其他与崩溃类型相关的 WinDbg 命令
+4. **对于 exe+pdb 文件**，使用 `launch_debug` 在调试器中启动程序并观察崩溃行为。
+5. **综合分析结果**，生成最终报告。
 
-## Report Format
+## 报告格式（重要！）
 
-Your final report MUST be in Markdown format with these sections:
+你的最终报告必须使用中文，Markdown 格式，并包含以下两个部分：
 
-### Crash Summary
-Brief one-paragraph description of what happened.
+---
 
-### Detailed Analysis
-In-depth explanation of the crash mechanism, including exception type, \
-faulting instruction, and relevant memory state.
+## 研发分析报告
 
-### Stack Trace Analysis
-Key stack frames and their significance. Identify the transition from \
-system code to application code.
+面向开发人员，包含完整的技术细节。
 
-### Root Cause
-Most likely root cause of the crash with supporting evidence from the \
-debugging output.
+### 崩溃概要
+简要描述发生了什么（一段话，含关键地址和模块名）。
 
-### Recommendations
-Actionable suggestions for fixing the issue or gathering more information.
+### 详细分析
+深入解释崩溃机制，包括异常类型、故障指令和相关内存状态。引用具体的地址、模块名和偏移量。
 
-## Guidelines
-- Be thorough but concise.
-- Always cite specific addresses, module names, and offsets from the debug output.
-- If the dump is inconclusive, say so and suggest what additional information \
-would help.
-- Do NOT fabricate debugging output — only report what the tools actually return.
+### 堆栈分析
+关键堆栈帧及其含义，标识从系统代码到应用程序代码的转换点。
+
+### 根因分析
+最可能的崩溃根本原因，附上来自调试输出的支持证据。
+
+### 修复建议
+可操作的修复建议或进一步收集信息的建议。
+
+---
+
+## 售后支持报告
+
+面向售后/技术支持人员，使用通俗易懂的语言。
+
+### 问题描述
+用非技术语言解释发生了什么问题，用户会看到什么现象（崩溃/蓝屏/卡死等）。
+
+### 受影响场景
+哪些使用场景或操作可能触发此问题。
+
+### 影响范围
+问题的影响程度：单用户受影响还是多用户？是否影响数据安全？
+
+### 建议措施
+可以给客户的操作建议（如：升级驱动、安装补丁、修改配置等）。
+
+### 升级建议
+如果需要转交给研发团队，需要提供哪些关键信息。
+
+---
+
+## 分析指南
+- 始终使用中文撰写报告内容。
+- 彻底分析，但保持简洁。
+- 始终引用调试输出中的具体地址、模块名和偏移。
+- 如果转储文件不足以得出结论，请说明情况，并提出收集更多信息的建议。
+- 严禁虚构调试输出内容——只报告工具实际返回的结果。
+- 两个报告部分都必须完整，不能省略。
 """
 
 # ============================================================================
@@ -135,15 +158,15 @@ def mcp_tools_to_openai_functions(tools):
 def build_user_message(file_paths):
     """Construct the user message listing files to analyze."""
     if not file_paths:
-        return "No dump or executable files were found. Please check the download step."
+        return "未找到转储文件或可执行文件，请检查上传步骤。"
 
-    lines = ["Please analyze the following file(s):\n"]
+    lines = ["请分析以下文件：\n"]
     for fp in file_paths:
         ext = os.path.splitext(fp)[1].lower()
-        label = {".dmp": "Crash dump", ".exe": "Executable", ".pdb": "Debug symbols"}.get(ext, "File")
-        lines.append(f"- {label}: `{fp}`")
+        label = {".dmp": "崩溃转储", ".exe": "可执行文件", ".pdb": "调试符号"}.get(ext, "文件")
+        lines.append(f"- {label}：`{fp}`")
 
-    lines.append("\nStart by opening the dump file (if present) or launching the executable under the debugger.")
+    lines.append("\n请先打开转储文件（如有），或在调试器中启动可执行文件，然后按流程完成分析。")
     return "\n".join(lines)
 
 
@@ -546,7 +569,27 @@ class AnalysisOrchestrator:
 # ============================================================================
 
 def main():
-    """Main entry point — read config from env vars, run analysis, write output."""
+    """Main entry point — read config from env vars and CLI args, run analysis, write output."""
+    # -- Parse command line arguments ----------------------------------------
+    parser = argparse.ArgumentParser(
+        description="MCP Client for Windows crash dump analysis",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument(
+        "--symbols-path",
+        type=str,
+        default=None,
+        help="Path to symbol files directory (optional). Will be set as _NT_SYMBOL_PATH."
+    )
+    parser.add_argument(
+        "--source-path",
+        type=str,
+        default=None,
+        help="Path to source code directory (optional). Will be set as _NT_SOURCE_PATH."
+    )
+    
+    args = parser.parse_args()
+    
     print("::group::Step 4 - AI Crash Dump Analysis", flush=True)
     sys.stdout.reconfigure(encoding="utf-8")
     sys.stderr.reconfigure(encoding="utf-8")
@@ -562,6 +605,11 @@ def main():
     cdb_path = os.environ.get("CDB_PATH", "cdb.exe")
     mcp_server_path = os.environ.get("MCP_SERVER_PATH", "mcp-windbg-rs.exe")
     download_dir = os.environ.get("DOWNLOAD_DIR", "dump_files")
+    
+    # -- Override symbols_path from command line if provided -----------------
+    if args.symbols_path:
+        symbols_path = args.symbols_path
+        log(f"Using symbols path from command line: {symbols_path}")
 
     if not api_key or not api_base or not model:
         print("::error::Missing required environment variables: API_KEY, API_BASE, MODEL", flush=True)
@@ -605,6 +653,11 @@ def main():
     server_env = os.environ.copy()
     server_env["CDB_PATH"] = cdb_path
     server_env["_NT_SYMBOL_PATH"] = symbols_path
+    
+    # -- Set source path environment variable if provided --------------------
+    if args.source_path:
+        server_env["_NT_SOURCE_PATH"] = args.source_path
+        log(f"Using source path: {args.source_path}")
 
     server_cmd = [mcp_server_path]
 

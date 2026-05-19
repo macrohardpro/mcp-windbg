@@ -1,0 +1,55 @@
+# Web Dump Debugger - Configuration File
+# Copy this file to config.toml and adjust values as needed.
+# Command-line: web-dump-debugger --config config.toml
+
+# HTTP server port
+port = 8080
+
+# Maximum upload size in bytes (2 GB)
+max_upload_size = 2147483648
+
+# Maximum concurrent analysis sessions
+max_concurrent_sessions = 5
+
+# Cleanup task interval in seconds (3600 = 1 hour)
+cleanup_interval_secs = 3600
+
+# Session time-to-live in seconds (86400 = 24 hours)
+session_ttl_secs = 86400
+
+[paths]
+# Path to the mcp-windbg-rs MCP server executable
+mcp_server = "target\\release\\mcp-windbg-rs.exe"
+
+# Path to Python interpreter (Python 3.8+ required)
+python = "python"
+
+# Path to cdb.exe (Windows Debugger)
+# If not set, auto-discovered from Windows SDK / WinDbg Preview paths
+cdb = "C:\\Program Files (x86)\\Windows Kits\\10\\Debuggers\\x64\\cdb.exe"
+
+# Root directory for temporary session workspaces
+workspace_root = "C:\\Temp\\web-dump-debugger"
+
+[llm]
+# API key for the LLM service (required)
+api_key = "sk-45b2c1ae438f44ae90b6768abf0b9369"
+
+# API base URL (DeepSeek API endpoint)
+api_base = "https://api.deepseek.com"
+
+# Model name to use for analysis
+model = "deepseek-v4-pro"
+
+# Maximum tool-calling turns per analysis
+max_turns = 30
+
+# Analysis timeout in seconds (300 = 5 minutes)
+timeout_secs = 300
+
+[rate_limit]
+# Enable rate limiting per IP
+enabled = true
+
+# Maximum uploads per minute per IP address
+max_uploads_per_minute = 3

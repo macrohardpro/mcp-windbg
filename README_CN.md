@@ -168,6 +168,54 @@ lsa .            — 显示当前位置的源码
 
 **命令超时** — 通过 `--timeout 60` 或 `MCP_WINDBG_TIMEOUT=60` 增加超时。大型 dump 和符号下载可能需要更高的 `MCP_WINDBG_INIT_TIMEOUT`。
 
+## Web Dump Debugger
+
+该项目还包含一个**基于 Web 的崩溃转储分析服务** (`web-dump-debugger`)，提供用于上传、分析和报告崩溃转储的浏览器界面。
+
+### 功能
+
+- **Web 上传** — 通过浏览器上传包含转储文件的 `.zip`、`.7z` 或 `.tar.gz` 压缩包
+- **自动解压** — 自动解压并扫描 `.dmp`、`.pdb` 和源代码文件
+- **LLM 分析** — 复用与 GitHub Actions 工作流相同的 `mcp_client.py` 编排逻辑
+- **实时进度** — 通过 Server-Sent Events (SSE) 向浏览器流式传输实时分析进度
+- **HTML 报告** — Markdown 分析结果渲染为带语法高亮的 HTML 页面
+- **速率限制** — 基于 IP 的滑动窗口上传频率限制
+- **会话管理** — 每个上传创建独立的工作目录，支持自动清理
+
+### 快速开始
+
+```bash
+# 构建两个可执行文件
+cargo build --release
+
+# 创建配置文件（先修改 llm.api_key）
+cp config.example.toml config.toml
+
+# 启动 Web 服务器
+./target/release/web-dump-debugger --config config.toml
+```
+
+然后在浏览器中打开 `http://localhost:8080`。
+
+### 配置
+
+所有配置选项请参考 [config.example.toml](config.example.toml)。服务器支持 TOML 配置文件和环境变量两种配置方式。
+
+### API 端点
+
+| 方法 | 路径 | 说明 |
+|--------|------|------|
+| `GET` | `/` | 上传表单 HTML 页面 |
+| `POST` | `/upload` | 上传崩溃转储压缩包（multipart/form-data） |
+| `GET` | `/progress/:id` | SSE 进度流 |
+| `GET` | `/report/:id` | HTML 报告页面 |
+| `GET` | `/download/:id` | 下载原始 Markdown 报告 |
+| `GET` | `/health` | 健康检查（JSON） |
+
+### 部署
+
+生产环境部署指南请参考 [docs/WEB_DEPLOYMENT.md](docs/WEB_DEPLOYMENT.md)。
+
 ## 相关链接
 
 - [mcp-windbg (Python)](https://github.com/svnscha/mcp-windbg) — 原始 Python 实现
