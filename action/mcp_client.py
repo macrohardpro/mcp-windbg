@@ -435,12 +435,15 @@ class LlmClient:
 class AnalysisOrchestrator:
     """Coordinates the MCP client and LLM client in an AI tool-calling loop."""
 
-    def __init__(self, mcp, llm, max_turns=30, timeout=300, system_prompt=None):
+    def __init__(self, mcp, llm, max_turns=30, timeout=300, system_prompt=None,
+                 cdb_path=None, symbols_path=None):
         self._mcp = mcp
         self._llm = llm
         self._max_turns = max_turns
         self._timeout = timeout
         self._system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
+        self._cdb_path = cdb_path or "cdb.exe"
+        self._symbols_path = symbols_path or ""
         self.turns_used = 0
         self.estimated_tokens = 0
         self.partial_report = None
@@ -468,6 +471,76 @@ class AnalysisOrchestrator:
             parts.append("\n\n---\n*Analysis was in progress. Tools used: {}*".format(", ".join(tool_names)))
 
         return "\n".join(parts) if parts else ""
+
+    def _try_direct_cdb(self, tool_name, tool_args):
+        """Attempt direct cdb.exe invocation as fallback for timed-out MCP calls.
+        Returns (result_text, success_bool).
+        """
+        cdb = self._cdb_path
+
+        # Check cdb exists
+        if not os.path.isfile(cdb):
+            log(f"CDB not found at {cdb}, skipping fallback")
+            return None, False
+
+        dump_path = tool_args.get("dump_path", "")
+        connection_string = tool_args.get("connection_string", "")
+        command = tool_args.get("command", "")
+
+        try:
+            if tool_name == "open_windbg_dump":
+                if not dump_path:
+                    return None, False
+                cmd = [cdb, "-z", dump_path, "-c", ".lastevent;!analyze -v;q"]
+
+            elif tool_name == "run_windbg_cmd":
+                if dump_path:
+                    cmd = [cdb, "-z", dump_path, "-c", f"{command};q"]
+                elif connection_string:
+                    cmd = [cdb, "-remote", connection_string, "-c", f"{command};q"]
+                else:
+                    return None, False
+
+            elif tool_name == "open_windbg_remote":
+                if not connection_string:
+                    return None, False
+                cmd = [cdb, "-remote", connection_string, "-c", "!peb;r;q"]
+
+            else:
+                # launch_debug, close_*, list_windbg_dumps — no fallback
+                return None, False
+
+            log(f"MCP call timed out, falling back to direct CDB invocation: {' '.join(cmd)}")
+
+            env = os.environ.copy()
+            if self._symbols_path:
+                env["_NT_SYMBOL_PATH"] = self._symbols_path
+
+            proc = subprocess.run(
+                cmd,
+                capture_output=True,
+                timeout=120,
+                env=env,
+            )
+
+            output = proc.stdout.decode("utf-8", errors="replace")
+            if proc.stderr:
+                stderr_text = proc.stderr.decode("utf-8", errors="replace")
+                if stderr_text.strip():
+                    output += "\n[STDERR]\n" + stderr_text
+
+            if not output.strip():
+                output = "(CDB produced no output)"
+
+            log(f"Direct CDB fallback succeeded ({len(output)} chars of output)")
+            return output, True
+
+        except subprocess.TimeoutExpired:
+            log(f"Direct CDB fallback also timed out")
+            return None, False
+        except Exception as exc:
+            log(f"Direct CDB fallback failed: {exc}")
+            return None, False
 
     def run(self, user_message):
         """Execute the AI analysis loop.
@@ -536,8 +609,13 @@ class AnalysisOrchestrator:
                         result_text = f"[Tool Error] {exc}"
                         log(f"  Tool error: {exc}")
                     except McpError as exc:
-                        result_text = f"[MCP Error] {exc}"
-                        log(f"  MCP error: {exc}")
+                        log(f"  MCP error: {exc}, attempting direct CDB fallback...")
+                        fallback_text, ok = self._try_direct_cdb(tool_name, tool_args)
+                        if ok:
+                            result_text = fallback_text
+                            log(f"  Fallback succeeded using direct CDB")
+                        else:
+                            result_text = f"[MCP Error] {exc}"
 
                     # Append tool result
                     messages.append({
@@ -670,6 +748,8 @@ def main():
         max_turns=max_turns,
         timeout=timeout,
         system_prompt=system_prompt,
+        cdb_path=cdb_path,
+        symbols_path=symbols_path,
     )
 
     # -- Run analysis --------------------------------------------------------
