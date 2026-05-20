@@ -640,6 +640,7 @@ mod tests {
             max_concurrent_sessions: 5,
             cleanup_interval_secs: 3600,
             session_ttl_secs: 86400,
+            max_stored_sessions: 50,
             paths: crate::http::config::PathConfig::default(),
             llm: crate::http::config::LlmConfig {
                 api_key: "test-key".to_string(),

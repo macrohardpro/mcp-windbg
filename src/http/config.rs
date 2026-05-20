@@ -38,7 +38,11 @@ pub struct ServerConfig {
     /// Session time-to-live in seconds (default: 86400 = 24 hours)
     #[serde(default = "default_session_ttl")]
     pub session_ttl_secs: u64,
-    
+
+    /// Maximum stored session directories (default: 50)
+    #[serde(default = "default_max_stored_sessions")]
+    pub max_stored_sessions: usize,
+
     /// Path configuration
     #[serde(default)]
     pub paths: PathConfig,
@@ -123,6 +127,10 @@ fn default_cleanup_interval() -> u64 {
 
 fn default_session_ttl() -> u64 {
     86400 // 24 hours
+}
+
+fn default_max_stored_sessions() -> usize {
+    50
 }
 
 fn default_mcp_server_path() -> PathBuf {
@@ -219,7 +227,12 @@ impl ServerConfig {
             .ok()
             .and_then(|s| s.parse().ok())
             .unwrap_or_else(default_session_ttl);
-        
+
+        let max_stored_sessions = std::env::var("MAX_STORED_SESSIONS")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_else(default_max_stored_sessions);
+
         let max_turns = std::env::var("MAX_TURNS")
             .ok()
             .and_then(|s| s.parse().ok())
@@ -262,6 +275,7 @@ impl ServerConfig {
             max_concurrent_sessions,
             cleanup_interval_secs,
             session_ttl_secs,
+            max_stored_sessions,
             paths: PathConfig {
                 mcp_server,
                 python,
@@ -342,6 +356,7 @@ mod tests {
             max_concurrent_sessions: default_max_concurrent_sessions(),
             cleanup_interval_secs: default_cleanup_interval(),
             session_ttl_secs: default_session_ttl(),
+            max_stored_sessions: default_max_stored_sessions(),
             paths: PathConfig::default(),
             llm: LlmConfig {
                 api_key: "test-key".to_string(),
@@ -367,6 +382,7 @@ mod tests {
             max_concurrent_sessions: default_max_concurrent_sessions(),
             cleanup_interval_secs: default_cleanup_interval(),
             session_ttl_secs: default_session_ttl(),
+            max_stored_sessions: default_max_stored_sessions(),
             paths: PathConfig::default(),
             llm: LlmConfig {
                 api_key: "test-key".to_string(),

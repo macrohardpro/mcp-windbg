@@ -17,6 +17,10 @@ cleanup_interval_secs = 3600
 # Session time-to-live in seconds (86400 = 24 hours)
 session_ttl_secs = 86400
 
+# Maximum stored session directories (default: 50)
+# Oldest sessions are cleaned up when limit is exceeded
+max_stored_sessions = 50
+
 [paths]
 # Path to the mcp-windbg-rs MCP server executable
 mcp_server = "target\\release\\mcp-windbg-rs.exe"
