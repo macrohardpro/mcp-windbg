@@ -110,17 +110,14 @@ fn create_progress_stream(
             }
         }
 
-        // Wait for process to be available
-        let mut retries = 0;
-        let process = loop {
-            if let Some(proc) = state.session_manager.take_process(&session_id).await {
-                break proc;
-            }
+        // Wait for analysis process to be ready, polling session status
+        // 10-minute total timeout for process readiness
+        let deadline = tokio::time::Instant::now() + Duration::from_secs(600);
 
-            retries += 1;
-            if retries > 30 {
+        let process = loop {
+            if tokio::time::Instant::now() > deadline {
                 let ev = ProgressEvent::Error {
-                    message: "分析进程未能启动".to_string(),
+                    message: "分析进程启动超时（超过10分钟），请检查文件大小或服务器负载".to_string(),
                 };
                 if let Ok(json) = serde_json::to_string(&ev) {
                     yield Ok(Event::default().data(json));
@@ -128,7 +125,38 @@ fn create_progress_stream(
                 return;
             }
 
-            tokio::time::sleep(Duration::from_secs(1)).await;
+            match state.session_manager.get_session(&session_id).await {
+                Some(SessionStatus::Uploading) | Some(SessionStatus::Extracting) => {
+                    // Still preparing, keep waiting
+                    tokio::time::sleep(Duration::from_secs(2)).await;
+                }
+                Some(SessionStatus::Analyzing) | Some(SessionStatus::Complete) => {
+                    // Process should be ready
+                    if let Some(proc) = state.session_manager.take_process(&session_id).await {
+                        break proc;
+                    }
+                    // Process not set yet, retry shortly
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                }
+                Some(SessionStatus::Failed(msg)) => {
+                    let ev = ProgressEvent::Error {
+                        message: format!("分析失败: {}", msg),
+                    };
+                    if let Ok(json) = serde_json::to_string(&ev) {
+                        yield Ok(Event::default().data(json));
+                    }
+                    return;
+                }
+                None => {
+                    let ev = ProgressEvent::Error {
+                        message: "会话未找到".to_string(),
+                    };
+                    if let Ok(json) = serde_json::to_string(&ev) {
+                        yield Ok(Event::default().data(json));
+                    }
+                    return;
+                }
+            }
         };
 
         info!("Streaming output for session {}", session_id);
