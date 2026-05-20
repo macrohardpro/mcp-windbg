@@ -40,6 +40,11 @@ impl CleanupTask {
             } else {
                 debug!("No expired sessions to clean up");
             }
+
+            // Also enforce max_stored_sessions limit (belt-and-suspenders)
+            // cleanup_overflow is called internally by create_session too,
+            // but this handles the case where max_stored_sessions is lowered via config
+            self.session_manager.cleanup_overflow().await;
         }
     }
 }
