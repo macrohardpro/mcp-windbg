@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-05-20
+
+### Added
+- Session storage under unified `sessions/` subdirectory (`{workspace_root}/sessions/{uuid}/`)
+- Configurable `max_stored_sessions` limit (default: 50) — oldest sessions auto-cleaned when exceeded
+- `MAX_STORED_SESSIONS` environment variable support
+- Direct CDB.exe fallback in `mcp_client.py` — when MCP tool calls timeout, spawns one-shot `cdb.exe` process to retry the command
+- Overflow cleanup in background cleanup task — enforces `max_stored_sessions` limit alongside TTL cleanup
+
+### Fixed
+- Progress SSE extraction timeout — replaced fixed 30-second retry loop with adaptive `SessionStatus` polling (waits while Extracting/Uploading, exits on Failed, 10-minute hard ceiling)
+- Race condition where large archive extraction (>30s) caused progress stream to incorrectly report "process failed to start"
+
 ## [0.3.0] - 2026-05-20
 
 ### Added
