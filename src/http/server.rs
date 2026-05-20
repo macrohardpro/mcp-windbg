@@ -38,6 +38,7 @@ impl HttpServer {
             max_concurrent: config.max_concurrent_sessions,
             ttl: config.session_ttl(),
             workspace_root: config.paths.workspace_root.clone(),
+            max_stored_sessions: config.max_stored_sessions,
         };
         
         let session_manager = Arc::new(SessionManager::new(session_config));

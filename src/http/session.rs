@@ -42,6 +42,7 @@ pub struct SessionConfig {
     pub max_concurrent: usize,
     pub ttl: Duration,
     pub workspace_root: PathBuf,
+    pub max_stored_sessions: usize,
 }
 
 /// Session manager
@@ -61,6 +62,9 @@ impl SessionManager {
     
     /// Create a new session
     pub async fn create_session(&self, client_ip: Option<IpAddr>) -> HttpResult<SessionId> {
+        // Clean up oldest sessions if at capacity
+        self.cleanup_overflow().await;
+
         let mut sessions = self.sessions.write().await;
         
         // Check concurrent session limit
@@ -72,7 +76,7 @@ impl SessionManager {
         let session_id = Uuid::new_v4().to_string();
         
         // Create workspace directory
-        let workspace = self.config.workspace_root.join(&session_id);
+        let workspace = self.config.workspace_root.join("sessions").join(&session_id);
         tokio::fs::create_dir_all(&workspace).await?;
         
         info!("Created session {} (ip={:?})", session_id, client_ip);
@@ -185,6 +189,56 @@ impl SessionManager {
         
         count
     }
+
+    /// Remove oldest sessions until count is below max_stored_sessions
+    pub async fn cleanup_overflow(&self) {
+        let mut sessions = self.sessions.write().await;
+        let max = self.config.max_stored_sessions;
+
+        while sessions.len() >= max {
+            // Find oldest session by created_at
+            let oldest_id = sessions
+                .iter()
+                .min_by_key(|(_, s)| s.created_at)
+                .map(|(id, _)| id.clone());
+
+            if let Some(id) = oldest_id {
+                if let Some(session) = sessions.remove(&id) {
+                    info!(
+                        "Cleaning up overflow session {} (created {:?})",
+                        id, session.created_at
+                    );
+
+                    if let Some(mut process) = session.process {
+                        let _ = process.kill().await;
+                    }
+
+                    let workspace = session.workspace.clone();
+                    tokio::spawn(async move {
+                        for attempt in 1..=3 {
+                            match tokio::fs::remove_dir_all(&workspace).await {
+                                Ok(_) => {
+                                    debug!("Removed overflow workspace: {:?}", workspace);
+                                    break;
+                                }
+                                Err(e) => {
+                                    warn!(
+                                        "Failed to remove overflow workspace {:?} (attempt {}): {}",
+                                        workspace, attempt, e
+                                    );
+                                    if attempt < 3 {
+                                        tokio::time::sleep(Duration::from_secs(1)).await;
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -198,6 +252,7 @@ mod tests {
             max_concurrent: 2,
             ttl: Duration::from_secs(60),
             workspace_root: temp_dir.path().to_path_buf(),
+            max_stored_sessions: 50,
         };
         (config, temp_dir)
     }
@@ -247,11 +302,28 @@ mod tests {
     async fn test_workspace_creation() {
         let (config, _temp) = test_config();
         let manager = SessionManager::new(config);
-        
+
         let session_id = manager.create_session(None).await.unwrap();
         let workspace = manager.get_workspace(&session_id).await.unwrap();
-        
+
         assert!(workspace.exists());
         assert!(workspace.is_dir());
+    }
+
+    #[tokio::test]
+    async fn test_overflow_cleanup() {
+        let (mut config, _temp) = test_config();
+        config.max_stored_sessions = 3;
+        config.max_concurrent = 100; // don't limit concurrent
+        let manager = SessionManager::new(config);
+
+        // Create 5 sessions
+        for _ in 0..5 {
+            manager.create_session(None).await.unwrap();
+        }
+
+        // Should have cleaned up to stay at or below 3
+        let count = manager.active_count().await;
+        assert!(count <= 3, "Expected <= 3 sessions, got {}", count);
     }
 }
