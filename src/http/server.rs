@@ -642,6 +642,8 @@ mod tests {
             cleanup_interval_secs: 3600,
             session_ttl_secs: 86400,
             max_stored_sessions: 50,
+            cdb_command_timeout_secs: 60,
+            cdb_init_timeout_secs: 120,
             paths: crate::http::config::PathConfig::default(),
             llm: crate::http::config::LlmConfig {
                 api_key: "test-key".to_string(),

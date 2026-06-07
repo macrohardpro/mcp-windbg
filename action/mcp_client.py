@@ -491,20 +491,20 @@ class AnalysisOrchestrator:
             if tool_name == "open_windbg_dump":
                 if not dump_path:
                     return None, False
-                cmd = [cdb, "-z", dump_path, "-c", ".lastevent;!analyze -v;q"]
+                cmd = [cdb, "-z", dump_path, "-c", ".symopt+0x100;.lastevent;!analyze -v;q"]
 
             elif tool_name == "run_windbg_cmd":
                 if dump_path:
-                    cmd = [cdb, "-z", dump_path, "-c", f"{command};q"]
+                    cmd = [cdb, "-z", dump_path, "-c", f".symopt+0x100;{command};q"]
                 elif connection_string:
-                    cmd = [cdb, "-remote", connection_string, "-c", f"{command};q"]
+                    cmd = [cdb, "-remote", connection_string, "-c", f".symopt+0x100;{command};q"]
                 else:
                     return None, False
 
             elif tool_name == "open_windbg_remote":
                 if not connection_string:
                     return None, False
-                cmd = [cdb, "-remote", connection_string, "-c", "!peb;r;q"]
+                cmd = [cdb, "-remote", connection_string, "-c", ".symopt+0x100;!peb;r;q"]
 
             else:
                 # launch_debug, close_*, list_windbg_dumps — no fallback
@@ -679,7 +679,11 @@ def main():
     max_turns = int(os.environ.get("MAX_TURNS", "30"))
     timeout = int(os.environ.get("TIMEOUT", "300"))
     system_prompt = os.environ.get("SYSTEM_PROMPT", "") or None
-    symbols_path = os.environ.get("SYMBOLS_PATH", r"SRV*C:\Symbols*https://msdl.microsoft.com/download/symbols")
+    symbols_path = (
+        os.environ.get("SYMBOLS_PATH")
+        or os.environ.get("_NT_SYMBOL_PATH")
+        or r"SRV*C:\Symbols*https://msdl.microsoft.com/download/symbols"
+    )
     cdb_path = os.environ.get("CDB_PATH", "cdb.exe")
     mcp_server_path = os.environ.get("MCP_SERVER_PATH", "mcp-windbg-rs.exe")
     download_dir = os.environ.get("DOWNLOAD_DIR", "dump_files")

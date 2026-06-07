@@ -21,6 +21,15 @@ session_ttl_secs = 86400
 # Oldest sessions are cleaned up when limit is exceeded
 max_stored_sessions = 50
 
+# CDB command execution timeout in seconds (default: 60)
+# This is passed as MCP_WINDBG_TIMEOUT to mcp-windbg-rs
+cdb_command_timeout_secs = 60
+
+# CDB initialization timeout in seconds (default: 120)
+# Controls how long mcp-windbg-rs waits for dump loading and symbol downloads
+# This is passed as MCP_WINDBG_INIT_TIMEOUT to mcp-windbg-rs
+cdb_init_timeout_secs = 120
+
 [paths]
 # Path to the mcp-windbg-rs MCP server executable
 mcp_server = "target\\release\\mcp-windbg-rs.exe"
@@ -37,7 +46,7 @@ workspace_root = "C:\\Temp\\web-dump-debugger"
 
 [llm]
 # API key for the LLM service (required)
-api_key = "sk-keyxxxxxxx"
+api_key = "sk-xxx"
 
 # API base URL (DeepSeek API endpoint)
 api_base = "https://api.deepseek.com"

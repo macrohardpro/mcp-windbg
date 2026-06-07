@@ -24,6 +24,8 @@ pub struct AnalysisRequest {
     pub max_turns: u32,
     pub timeout_secs: u64,
     pub cdb_path: PathBuf,
+    pub cdb_command_timeout_secs: u64,
+    pub cdb_init_timeout_secs: u64,
 }
 
 impl McpClientWrapper {
@@ -68,6 +70,8 @@ impl McpClientWrapper {
         cmd.env("TIMEOUT", request.timeout_secs.to_string());
         cmd.env("MCP_SERVER_PATH", &self.mcp_server_path);
         cmd.env("CDB_PATH", &request.cdb_path);
+        cmd.env("MCP_WINDBG_TIMEOUT", request.cdb_command_timeout_secs.to_string());
+        cmd.env("MCP_WINDBG_INIT_TIMEOUT", request.cdb_init_timeout_secs.to_string());
         // DOWNLOAD_DIR should point to where the .dmp files actually are
         let download_dir = request.dump_path.parent().unwrap_or(&request.workspace);
         cmd.env("DOWNLOAD_DIR", download_dir);
@@ -128,10 +132,14 @@ mod tests {
             max_turns: 30,
             timeout_secs: 300,
             cdb_path: PathBuf::from("cdb.exe"),
+            cdb_command_timeout_secs: 60,
+            cdb_init_timeout_secs: 120,
         };
-        
+
         assert_eq!(request.api_key, "test-key");
         assert_eq!(request.max_turns, 30);
+        assert_eq!(request.cdb_command_timeout_secs, 60);
+        assert_eq!(request.cdb_init_timeout_secs, 120);
         assert!(request.symbols_path.is_some());
         assert!(request.source_path.is_some());
     }

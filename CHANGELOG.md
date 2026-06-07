@@ -5,6 +5,19 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-06-08
+
+### Added
+- `cdb_command_timeout_secs` and `cdb_init_timeout_secs` to TOML config — MCP CDB timeouts now configurable via `config.toml` (`[llm]` section or top-level) with env var overrides (`CDB_COMMAND_TIMEOUT`, `CDB_INIT_TIMEOUT`)
+- `MCP_WINDBG_TIMEOUT` and `MCP_WINDBG_INIT_TIMEOUT` env var propagation from `web-dump-debugger` → `mcp_client.py` → `mcp-windbg-rs`
+
+### Changed
+- Symbol path resolution now checks `_NT_SYMBOL_PATH` (standard Windows debugger env var) before falling back to hardcoded default
+- `prefetch_symbols.ps1` respects existing `_NT_SYMBOL_PATH` and parses cache/server from it
+
+### Fixed
+- CDB command timeout (30s) and init timeout (120s) were not configurable via `config.toml` and not propagated through the MCP pipeline, causing mismatches between configured timeouts and actual runtime behavior
+
 ## [0.4.0] - 2026-05-20
 
 ### Added

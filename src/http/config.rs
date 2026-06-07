@@ -43,6 +43,14 @@ pub struct ServerConfig {
     #[serde(default = "default_max_stored_sessions")]
     pub max_stored_sessions: usize,
 
+    /// CDB command execution timeout in seconds (default: 60)
+    #[serde(default = "default_cdb_command_timeout")]
+    pub cdb_command_timeout_secs: u64,
+
+    /// CDB initialization timeout in seconds (default: 120)
+    #[serde(default = "default_cdb_init_timeout")]
+    pub cdb_init_timeout_secs: u64,
+
     /// Path configuration
     #[serde(default)]
     pub paths: PathConfig,
@@ -131,6 +139,14 @@ fn default_session_ttl() -> u64 {
 
 fn default_max_stored_sessions() -> usize {
     50
+}
+
+fn default_cdb_command_timeout() -> u64 {
+    60
+}
+
+fn default_cdb_init_timeout() -> u64 {
+    120
 }
 
 fn default_mcp_server_path() -> PathBuf {
@@ -233,6 +249,16 @@ impl ServerConfig {
             .and_then(|s| s.parse().ok())
             .unwrap_or_else(default_max_stored_sessions);
 
+        let cdb_command_timeout_secs = std::env::var("CDB_COMMAND_TIMEOUT")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_else(default_cdb_command_timeout);
+
+        let cdb_init_timeout_secs = std::env::var("CDB_INIT_TIMEOUT")
+            .ok()
+            .and_then(|s| s.parse().ok())
+            .unwrap_or_else(default_cdb_init_timeout);
+
         let max_turns = std::env::var("MAX_TURNS")
             .ok()
             .and_then(|s| s.parse().ok())
@@ -276,6 +302,8 @@ impl ServerConfig {
             cleanup_interval_secs,
             session_ttl_secs,
             max_stored_sessions,
+            cdb_command_timeout_secs,
+            cdb_init_timeout_secs,
             paths: PathConfig {
                 mcp_server,
                 python,
@@ -342,6 +370,16 @@ impl ServerConfig {
     pub fn analysis_timeout(&self) -> Duration {
         Duration::from_secs(self.llm.timeout_secs)
     }
+
+    /// Get CDB command timeout as Duration
+    pub fn cdb_command_timeout(&self) -> Duration {
+        Duration::from_secs(self.cdb_command_timeout_secs)
+    }
+
+    /// Get CDB init timeout as Duration
+    pub fn cdb_init_timeout(&self) -> Duration {
+        Duration::from_secs(self.cdb_init_timeout_secs)
+    }
 }
 
 #[cfg(test)]
@@ -357,6 +395,8 @@ mod tests {
             cleanup_interval_secs: default_cleanup_interval(),
             session_ttl_secs: default_session_ttl(),
             max_stored_sessions: default_max_stored_sessions(),
+            cdb_command_timeout_secs: default_cdb_command_timeout(),
+            cdb_init_timeout_secs: default_cdb_init_timeout(),
             paths: PathConfig::default(),
             llm: LlmConfig {
                 api_key: "test-key".to_string(),
@@ -367,13 +407,15 @@ mod tests {
             },
             rate_limit: RateLimitConfig::default(),
         };
-        
+
         assert_eq!(config.port, 8080);
         assert_eq!(config.max_upload_size, 500 * 1024 * 1024);
         assert_eq!(config.max_concurrent_sessions, 5);
+        assert_eq!(config.cdb_command_timeout_secs, 60);
+        assert_eq!(config.cdb_init_timeout_secs, 120);
         assert!(config.validate().is_ok());
     }
-    
+
     #[test]
     fn test_validation_errors() {
         let mut config = ServerConfig {
@@ -383,6 +425,8 @@ mod tests {
             cleanup_interval_secs: default_cleanup_interval(),
             session_ttl_secs: default_session_ttl(),
             max_stored_sessions: default_max_stored_sessions(),
+            cdb_command_timeout_secs: default_cdb_command_timeout(),
+            cdb_init_timeout_secs: default_cdb_init_timeout(),
             paths: PathConfig::default(),
             llm: LlmConfig {
                 api_key: "test-key".to_string(),
@@ -393,9 +437,9 @@ mod tests {
             },
             rate_limit: RateLimitConfig::default(),
         };
-        
+
         assert!(config.validate().is_err());
-        
+
         config.port = 8080;
         config.llm.api_key = String::new();
         assert!(config.validate().is_err());

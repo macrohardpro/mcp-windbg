@@ -171,6 +171,8 @@ async fn process_extract_and_analyze(
         max_turns: state.config.llm.max_turns,
         timeout_secs: state.config.llm.timeout_secs,
         cdb_path: state.config.paths.cdb.clone(),
+        cdb_command_timeout_secs: state.config.cdb_command_timeout_secs,
+        cdb_init_timeout_secs: state.config.cdb_init_timeout_secs,
     };
 
     // Start MCP client process

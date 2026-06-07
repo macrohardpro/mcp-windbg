@@ -81,7 +81,7 @@ impl CdbSession {
         cmd.arg("-z") // 打开转储文件
             .arg(dump_path)
             .arg("-c") // 初始命令
-            .arg(".echo CDB_READY") // 启动完成标记
+            .arg(".symopt+0x100;.echo CDB_READY") // 禁止符号弹窗 + 启动完成标记
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
@@ -169,7 +169,7 @@ impl CdbSession {
         cmd.arg("-remote") // 远程调试
             .arg(connection_string)
             .arg("-c") // 初始命令
-            .arg(".echo CDB_READY") // 启动完成标记
+            .arg(".symopt+0x100;.echo CDB_READY") // 禁止符号弹窗 + 启动完成标记
             .stdin(Stdio::piped())
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
@@ -257,7 +257,7 @@ impl CdbSession {
         // 构建命令：cdb.exe -c ".echo CDB_READY" <program_path> [args...]
         let mut cmd = Command::new(&cdb_exe);
         cmd.arg("-c") // 初始命令
-            .arg(".echo CDB_READY") // 启动完成标记
+            .arg(".symopt+0x100;.echo CDB_READY") // 禁止符号弹窗 + 启动完成标记
             .arg(program_path); // 目标程序路径
 
         // 添加程序的命令行参数
