@@ -66,9 +66,18 @@ impl SessionManager {
         self.cleanup_overflow().await;
 
         let mut sessions = self.sessions.write().await;
-        
-        // Check concurrent session limit
-        if sessions.len() >= self.config.max_concurrent {
+
+        // Check concurrent session limit (only count active sessions)
+        let active_count = sessions
+            .values()
+            .filter(|s| {
+                matches!(
+                    s.status,
+                    SessionStatus::Uploading | SessionStatus::Extracting | SessionStatus::Analyzing
+                )
+            })
+            .count();
+        if active_count >= self.config.max_concurrent {
             return Err(HttpError::TooManySessions(self.config.max_concurrent));
         }
         
@@ -252,7 +261,7 @@ mod tests {
             max_concurrent: 2,
             ttl: Duration::from_secs(60),
             workspace_root: temp_dir.path().to_path_buf(),
-            max_stored_sessions: 50,
+            max_stored_sessions: 20,
         };
         (config, temp_dir)
     }

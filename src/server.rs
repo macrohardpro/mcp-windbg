@@ -34,7 +34,7 @@ impl Default for ServerConfig {
             cdb_path: None,
             symbols_path: None,
             source_path: None,
-            timeout: Duration::from_secs(30),
+            timeout: Duration::from_secs(120),
             init_timeout: Duration::from_secs(120),
             verbose: false,
         }
@@ -651,7 +651,7 @@ mod tests {
     #[test]
     fn test_server_config_default() {
         let config = ServerConfig::default();
-        assert_eq!(config.timeout, Duration::from_secs(30));
+        assert_eq!(config.timeout, Duration::from_secs(120));
         assert!(!config.verbose);
         assert!(config.cdb_path.is_none());
         assert!(config.symbols_path.is_none());

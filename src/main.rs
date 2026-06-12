@@ -7,7 +7,7 @@ use tracing::info;
 #[command(author, version, about, long_about = None)]
 struct Args {
     /// 命令执行超时时间（秒）
-    #[arg(long, default_value = "30")]
+    #[arg(long, default_value = "120")]
     timeout: u64,
 
     /// 初始化超时时间（秒）

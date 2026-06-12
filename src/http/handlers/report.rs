@@ -336,17 +336,17 @@ fn render_markdown_to_html(markdown: &str) -> Result<String, HttpError> {
             var tmp = document.createElement('div');
             tmp.innerHTML = fullHtml;
 
-            // Find the h2 that starts the support section
-            var h2s = tmp.querySelectorAll('h2');
-            var supportH2 = null;
-            for (var i = 0; i < h2s.length; i++) {{
-                if (h2s[i].textContent.includes('售后支持报告')) {{
-                    supportH2 = h2s[i];
+            // Find the heading that starts the support section (h1, h2, or h3)
+            var headings = tmp.querySelectorAll('h1, h2, h3');
+            var supportHeading = null;
+            for (var i = 0; i < headings.length; i++) {{
+                if (headings[i].textContent.includes('售后支持报告')) {{
+                    supportHeading = headings[i];
                     break;
                 }}
             }}
 
-            if (!supportH2) {{
+            if (!supportHeading) {{
                 // No support section found — show a message
                 var p = document.createElement('p');
                 p.textContent = '报告尚未生成售后支持部分的內容。请等待分析完成后刷新页面。';
@@ -354,9 +354,9 @@ fn render_markdown_to_html(markdown: &str) -> Result<String, HttpError> {
                 return p.outerHTML;
             }}
 
-            // Collect supportH2 and all elements after it
+            // Collect supportHeading and all elements after it
             var parts = [];
-            var el = supportH2;
+            var el = supportHeading;
             while (el) {{
                 parts.push(el.outerHTML);
                 el = el.nextElementSibling;

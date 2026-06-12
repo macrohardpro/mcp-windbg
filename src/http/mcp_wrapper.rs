@@ -130,15 +130,15 @@ mod tests {
             api_base: "https://api.example.com".to_string(),
             model: "test-model".to_string(),
             max_turns: 30,
-            timeout_secs: 300,
+            timeout_secs: 600,
             cdb_path: PathBuf::from("cdb.exe"),
-            cdb_command_timeout_secs: 60,
+            cdb_command_timeout_secs: 120,
             cdb_init_timeout_secs: 120,
         };
 
         assert_eq!(request.api_key, "test-key");
         assert_eq!(request.max_turns, 30);
-        assert_eq!(request.cdb_command_timeout_secs, 60);
+        assert_eq!(request.cdb_command_timeout_secs, 120);
         assert_eq!(request.cdb_init_timeout_secs, 120);
         assert!(request.symbols_path.is_some());
         assert!(request.source_path.is_some());

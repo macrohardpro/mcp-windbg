@@ -43,7 +43,7 @@ pub struct ServerConfig {
     #[serde(default = "default_max_stored_sessions")]
     pub max_stored_sessions: usize,
 
-    /// CDB command execution timeout in seconds (default: 60)
+    /// CDB command execution timeout in seconds (default: 120)
     #[serde(default = "default_cdb_command_timeout")]
     pub cdb_command_timeout_secs: u64,
 
@@ -99,7 +99,7 @@ pub struct LlmConfig {
     #[serde(default = "default_max_turns")]
     pub max_turns: u32,
     
-    /// Analysis timeout in seconds (default: 300 = 5 minutes)
+    /// Analysis timeout in seconds (default: 600 = 10 minutes)
     #[serde(default = "default_timeout")]
     pub timeout_secs: u64,
 }
@@ -138,11 +138,11 @@ fn default_session_ttl() -> u64 {
 }
 
 fn default_max_stored_sessions() -> usize {
-    50
+    20
 }
 
 fn default_cdb_command_timeout() -> u64 {
-    60
+    120
 }
 
 fn default_cdb_init_timeout() -> u64 {
@@ -170,7 +170,7 @@ fn default_max_turns() -> u32 {
 }
 
 fn default_timeout() -> u64 {
-    300 // 5 minutes
+    600 // 10 minutes
 }
 
 fn default_rate_limit_enabled() -> bool {
@@ -411,7 +411,7 @@ mod tests {
         assert_eq!(config.port, 8080);
         assert_eq!(config.max_upload_size, 500 * 1024 * 1024);
         assert_eq!(config.max_concurrent_sessions, 5);
-        assert_eq!(config.cdb_command_timeout_secs, 60);
+        assert_eq!(config.cdb_command_timeout_secs, 120);
         assert_eq!(config.cdb_init_timeout_secs, 120);
         assert!(config.validate().is_ok());
     }

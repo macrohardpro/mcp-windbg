@@ -62,7 +62,7 @@ mod tests {
             max_concurrent: 5,
             ttl: Duration::from_secs(60),
             workspace_root: temp_dir.path().to_path_buf(),
-            max_stored_sessions: 50,
+            max_stored_sessions: 20,
         };
         
         let manager = Arc::new(SessionManager::new(config));

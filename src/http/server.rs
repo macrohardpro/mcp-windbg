@@ -641,8 +641,8 @@ mod tests {
             max_concurrent_sessions: 5,
             cleanup_interval_secs: 3600,
             session_ttl_secs: 86400,
-            max_stored_sessions: 50,
-            cdb_command_timeout_secs: 60,
+            max_stored_sessions: 20,
+            cdb_command_timeout_secs: 120,
             cdb_init_timeout_secs: 120,
             paths: crate::http::config::PathConfig::default(),
             llm: crate::http::config::LlmConfig {
@@ -650,7 +650,7 @@ mod tests {
                 api_base: "https://api.example.com".to_string(),
                 model: "test-model".to_string(),
                 max_turns: 30,
-                timeout_secs: 300,
+                timeout_secs: 600,
             },
             rate_limit: crate::http::config::RateLimitConfig::default(),
         };
